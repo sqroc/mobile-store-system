@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*" width="400" height="500" title="用户添加">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	
+	
+	
+	
+	<fx:Declarations>
+		<mx:StringValidator source="{username}" property="text" maxLength="10" minLength="3" tooShortError="至少输入3个字" tooLongError="最多输入10个字"/>
+		<mx:StringValidator source="{password}" property="text" maxLength="15" minLength="3" tooShortError="密码最少3位" tooLongError="密码最多15位"/>
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="User"   
+						 destination="userManager" channelSet="{cs}">
+			<mx:method name="add" result="handleResult_add(event)"/> 
+		
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			import mx.core.FlexGlobals;
+			import myAs.UserF;
+			
+			public var callFunction:Function;//回调函数
+			
+			
+			private function addSubmit() : void
+			{	
+				var tempUser : UserF = new UserF();
+				tempUser.username = String(username.text);
+				tempUser.password = String(password.text);
+				tempUser.realname = String(realname.text);
+				tempUser.phone = String(phone.text);
+				tempUser.address = String(address.text);
+				tempUser.postcode = String(postcode.text);
+				tempUser.money = Number(money.text);
+				
+			
+				User.add(tempUser);
+				PopUpManager.removePopUp(this);
+			
+				
+			
+			}
+			protected function addReset()  : void
+			{
+				username.text="";
+				password.text="";
+				realname.text="";
+				phone.text="";
+				postcode.text="";
+				money.text="";
+			}
+			protected function handleResult_add(event:ResultEvent):void
+			{	
+				if(event.result=="succeed"){
+					
+	                Alert.show("添加成功");
+					callFunction.call(parent);
+					
+
+					
+					this.close();
+				}
+			    else
+			        Alert.show("添加失败，用户名已存在");
+			}
+		
+		]]>
+	</fx:Script>
+       <mx:Form  x="53" y="28" width="300" height="400">
+			<mx:FormHeading label="请填写用户信息：" textAlign="left" width="191"/>
+			
+			<mx:FormItem label="用户名">
+				<mx:TextInput id="username" width="200" maxChars="100" />
+			</mx:FormItem>
+			<mx:FormItem label="密码">
+				<mx:TextInput id="password" width="200" displayAsPassword="true" maxChars="100"/>
+			</mx:FormItem>
+			<mx:FormItem label="真实姓名">
+				<mx:TextInput id="realname" width="200" maxChars="100" />
+			</mx:FormItem>
+			
+			<mx:FormItem label="电话">
+				<mx:TextInput id="phone" restrict="0-9" width="200" maxChars="100" />
+			</mx:FormItem>
+		   <mx:FormItem label="邮编">
+			   <mx:TextInput id="postcode" restrict="0-9" width="200" maxChars="100" />
+		   </mx:FormItem>
+			<mx:FormItem label="详细地址">
+				<mx:TextInput id="address" width="200" maxChars="100" />
+			</mx:FormItem>
+		   <mx:FormItem label="余额">
+			   <mx:TextInput id="money" restrict="0-9\." width="200" maxChars="100"/>
+		   </mx:FormItem>
+		   
+			
+		</mx:Form>
+		<s:Button id ="addS"  x="53" y="375" label="确定" width="101" click="addSubmit()"/>
+		<s:Button id ="addR"  x="238" y="375" label="重填" width="115" click="addReset()"/>
+
+</cw:DesktopWindow>

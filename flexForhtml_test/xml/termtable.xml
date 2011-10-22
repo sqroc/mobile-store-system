@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<term>
+       <term id="a" label="我的好友"  num="2">		
+	        <term id="a1" label="草原之夜" path="1" emotion="今天的天气真好啊！"/>
+			<term id="a2" label="北方的饿狼" path="2" emotion="神马都是浮云"/>
+	   </term>
+	    
+	    <term id="b" label="大学同学" num="3">		
+	        <term id="b1" label="张国荣" path="3" emotion="又一天过了"/>
+			<term id="b2" label="馒头" path="4" emotion="人这辈子啊"/>
+			<term id="b2" label="异国之恋" path="5" emotion="真TM的无聊啊"/>
+	   </term>
+	    
+	    <term id="c" label="初中同学" num="2">	
+	        <term id="c1" label="andy" path="9" emotion="今天心情有点低落"/>
+			<term id="c2" label="lucy" path="6" emotion="今天的天气真好啊！"/>
+	   </term>
+	    
+	    <term id="d" label="小学同学" num="4">	
+	        <term id="d1" label="刀疤" path="7" emotion="呼呼！~~~~~"/>
+			<term id="d2" label="小石头" path="8" emotion="你懂的！"/>
+			<term id="d2" label="飞翔的猪" path="10" emotion="滚"/>
+			<term id="d2" label="我本善良" path="11" emotion="失去鸟"/>
+	   </term>
+</term>

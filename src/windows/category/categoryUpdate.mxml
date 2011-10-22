@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"  creationComplete="init()"  width="300" height="400" title="修改药品分类">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	
+	
+	
+	
+	<fx:Declarations>
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="Category"   
+						 destination="categoryManager" channelSet="{cs}">
+			<mx:method name="modify" result="handleResult_modify(event)"/> 
+			
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;
+			import myAs.CategoryF;
+			public var callFunctionUpdate:Function;//回调函数
+			public var tempData:CategoryF;
+		
+			
+			
+			private function updateSubmit() : void
+			{	
+				var tempCategory : CategoryF = new CategoryF();
+				tempCategory.cid = tempData.cid;
+				tempCategory.name = String(Cname.text);
+				
+				
+				Category.modify(tempCategory);
+				PopUpManager.removePopUp(this);
+			
+			}
+			protected function init():void
+			{
+
+			     if(tempData !=null)
+				 {
+					 Cname.text = tempData.name;
+					
+				 }
+			}
+			
+			protected function updateReset()  : void
+			{
+		        init();
+            }
+			protected function handleResult_modify(event:ResultEvent):void
+			{
+				if(event.result=="succeed")
+				{
+					Alert.show("修改成功");
+					
+					callFunctionUpdate.call(parent);
+					this.close();
+				}
+				else
+					Alert.show("修改失败，该分类已存在");
+			}
+		
+		]]>
+	</fx:Script>
+
+
+		
+	<mx:Form x="51" y="29" width="243" height="129">
+		<mx:FormHeading label="添加药品分类" width="76"/>
+		<mx:FormItem label="分类名">
+			<mx:TextInput id="Cname" width="124" maxChars="100" />
+		</mx:FormItem>
+	</mx:Form>
+	<s:Button  id ="updateS" x="77" y="120" label="确定" click="updateSubmit()"/>
+	<s:Button id ="updateR" x="169" y="120" label="重填" click="updateReset()"/>
+
+	
+		
+
+</cw:DesktopWindow>

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*" width="400" height="500" title="添加管理员">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	
+	
+	
+	
+	<fx:Declarations>
+		<mx:StringValidator source="{username}" property="text" maxLength="100" minLength="3" tooShortError="至少输入3个字" tooLongError="最多输入20个字"/>
+		<mx:StringValidator source="{password}" property="text" maxLength="100" minLength="3" tooShortError="密码最少3位" tooLongError="密码最多20位"/>
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="Admin"   
+						 destination="adminManager" channelSet="{cs}">
+			<mx:method name="add" result="handleResult_add(event)"/> 
+		
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			
+			import myAs.AdminF;
+			
+			public var callFunction:Function;//回调函数
+			
+			
+			[Bindable]
+			public var ranks:ArrayCollection = new ArrayCollection(
+				[ {label:"超级管理员",data:0},
+					{label:"普通管理员",data:1}, 
+					{label:"仓库管理员",data:2}, 
+					{label:"客服人员", data:3} ]);
+			
+			[Bindable]
+			public var genders:ArrayCollection = new ArrayCollection(
+				[ {label:"男",data:0}, 
+					{label:"女", data:1 }]);
+			
+			
+			private function addSubmit() : void
+			{	
+				var tempAdmin : AdminF = new AdminF();
+				tempAdmin.username = String(username.text);
+				tempAdmin.password = String(password.text);
+				tempAdmin.gender = int(gender.text);
+				
+				if(rank.text=="超级管理员")
+					tempAdmin.rank=0;
+				else if(rank.text=="普通管理员")
+					tempAdmin.rank=1;
+				else if(rank.text=="仓库管理员")
+					tempAdmin.rank=2;
+				else if(rank.text=="客服人员")
+					tempAdmin.rank=3;
+				
+				//tempAdmin.rank = int(rank.text);
+				
+				if(addDate.selectedDate == null)
+				{	
+					tempAdmin.addDate = new Date();
+				}
+				else
+					tempAdmin.addDate = addDate.selectedDate;
+				
+			
+				Admin.add(tempAdmin);
+				
+			
+				
+			
+			}
+			protected function addReset()  : void
+			{
+				username.text="";
+				password.text="";
+				rank.text = "管理员";
+				gender.text = "男";
+				addDate.selectedDate = new Date();
+					
+				
+			}
+			protected function handleResult_add(event:ResultEvent):void
+			{	
+				if(event.result=="succeed"){
+					
+					
+					
+					
+	                Alert.show("添加成功");
+					PopUpManager.removePopUp(this);
+					
+					
+					
+					callFunction.call(parent);
+					this.close();
+				}
+			    else
+			        Alert.show("用户名已经存在");
+				
+			    }
+		
+		]]>
+	</fx:Script>
+
+       <mx:Form  x="53" y="28" width="300" height="400">
+			<mx:FormHeading label="请填写用户信息：" textAlign="left" width="191"/>
+			
+			<mx:FormItem label="用户名">
+				<mx:TextInput id="username" width="200" maxChars="100" />
+			</mx:FormItem>
+			<mx:FormItem label="密码">
+				<mx:TextInput id="password" width="200" displayAsPassword="true" maxChars="100"/>
+			</mx:FormItem>
+			<mx:FormItem label="权限">
+				<mx:ComboBox id="rank" dataProvider="{ranks}" width="200" color="0x000000"/>
+			</mx:FormItem>
+			
+			<mx:FormItem label="性别">
+				<mx:ComboBox id="gender" dataProvider="{genders}" width="200" color="0x000000"/>
+			</mx:FormItem>
+			<mx:FormItem label="添加日期"  width="267">
+				<mx:DateChooser id="addDate" height="169" width="199"/>
+			</mx:FormItem>
+			
+		</mx:Form>
+		<s:Button id ="addS"  x="53" y="375" label="确定" width="101" click="addSubmit()"/>
+		<s:Button id ="addR"  x="238" y="375" label="重填" width="115" click="addReset()"/>
+
+</cw:DesktopWindow>

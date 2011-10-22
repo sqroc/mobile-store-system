@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+               xmlns:s="library://ns.adobe.com/flex/spark"
+               xmlns:mx="library://ns.adobe.com/flex/mx" 
+               xmlns:amcharts="http://www.amcharts.com/com_internal"
+			   xmlns:cw="net.lanelife.framework.cw.*"
+			   backgroundColor="#FFFFFF">
+    
+    <fx:Style> 
+        @font-face 
+        {
+           
+            fontFamily: "Tahoma";
+            embedAsCFF: false;
+            unicode-range:
+                U+0020-U+0040, /* Punctuation, Numbers */
+                U+0041-U+005A, /* Upper-Case A-Z */
+                U+005B-U+0060, /* Punctuation and Symbols */
+                U+0061-U+007A, /* Lower-Case a-z */
+                U+007B-U+007E; /* Punctuation and Symbols */            
+        }  
+        
+        .MyTextStyle 
+        { 
+            font-family: Tahoma; 
+        }
+        
+    </fx:Style> 
+    
+    <fx:Script>
+        <![CDATA[
+            import flash.filters.DropShadowFilter;
+            
+            import mx.collections.ArrayCollection;
+            
+            [Bindable]
+			public var chartData:ArrayCollection ;//数据源
+            
+            [Bindable]
+			public var shadow:DropShadowFilter = new DropShadowFilter(2,45,0,0.5);
+            
+			[Bindable]
+			public var chartName :String; //表名
+			
+//			[Bindable]
+//			public var valueFieldString :String;//值
+//			
+//			[Bindable]
+//			public var titleFieldString :String;//值域
+        ]]>
+    </fx:Script>
+    <s:HGroup width="100%" height="100%">
+        <amcharts:AmPieChart
+            styleName="MyTextStyle"
+            width="50%"
+            height="100%"
+            dataProvider="{chartData}"
+            valueField="propertyValue"
+            titleField="propertyTitle"
+            angle="5"
+            depth3D="5"
+            innerRadius="10"
+            groupPercent="3"
+            gradient="radial"
+            filters="{[shadow]}"
+            startDuration="1.5"
+            startRadius="100"
+            marginLeft="0"
+            marginRight="0"
+            labelWidth="100">
+            
+            <amcharts:balloon>
+                <amcharts:AmBalloon cornerRadius="10" borderThickness="2" borderColor="#FFFFFF" borderAlpha="1"/>                
+            </amcharts:balloon>
+            
+        </amcharts:AmPieChart>
+        
+        <amcharts:AmSerialChart 
+            styleName="MyTextStyle"
+            width="50%"
+            height="100%"
+            dataProvider="{chartData}"
+            categoryField="propertyTitle"
+            startDuration="1"
+            angle="30"
+            depth3D="15">
+            <amcharts:categoryAxis>
+                <amcharts:CategoryAxis gridPosition="start" gridCount="{chartData.length}" labelRotation="90"/>
+            </amcharts:categoryAxis>
+			<amcharts:valueAxes>
+				<amcharts:ValueAxis title="VISITS PER DAY" titleTextColor="#CC0000"/>
+			</amcharts:valueAxes>			
+            <amcharts:graphs>
+                <amcharts:AmGraph balloonText="[[category]]: [[value]]" id="g0" valueField="propertyValue" type="column" lineAlpha="0" fillAlphas="[0.8]"/>                        
+            </amcharts:graphs>
+            <amcharts:balloon>
+                <amcharts:AmBalloon cornerRadius="10" borderThickness="2" borderColor="#FFFFFF" borderAlpha="1"/>                
+            </amcharts:balloon>    
+            <amcharts:chartCursor>
+                <amcharts:ChartCursor zoomable="false" cursorAlpha="0" categoryBalloonEnabled="false"/>                    
+            </amcharts:chartCursor>    
+        </amcharts:AmSerialChart>
+    </s:HGroup>
+	</cw:DesktopWindow>

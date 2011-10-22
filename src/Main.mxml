@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   skinClass="skins.AppliactionSkin" 
+			   xmlns:components="components.*" 
+			   xmlns:container="net.lanelife.framework.cw.container.*"
+			   currentState="loginState">
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		@namespace components "components.*";
+		@namespace container "net.lanelife.framework.cw.container.*";
+		s|Button {
+			skin-class:ClassReference("net.lanelife.framework.cw.skins.ButtonSkin");
+		}
+		
+		s|Scroller {
+			skin-class:ClassReference("net.lanelife.framework.cw.skins.ScrollerSkin");
+		}
+		
+		s|TextInput {
+			border-color:#479fcf;
+			focus-color:#85e4ff;
+			font-family:"宋体";
+		}
+		
+		s|TextArea {
+			border-color:#479fcf;
+			focus-color:#85e4ff;
+			font-family:"宋体";
+		}
+	</fx:Style>
+	
+	<s:states>
+		<s:State name="mainState"/>
+		<s:State name="loginState"/>
+	</s:states>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.controls.Label;
+			import mx.core.FlexGlobals;
+			import net.lanelife.framework.cw.DesktopWindow;
+			import net.lanelife.framework.cw.TrayIcon;
+			import net.lanelife.framework.cw.Window;
+			import net.lanelife.framework.cw.WindowManager;
+			import net.lanelife.framework.cw.events.WindowEvent;
+			import mx.controls.Image;
+			import mx.events.FlexEvent;
+			import mx.rpc.events.ResultEvent;
+			import spark.components.Button;
+			import windows.loginWindow;
+			import windows.*;
+			import windows.admin.AdminSceneWindow;
+			import windows.category.CategorySceneWindow;
+			import windows.user.UserSceneWindow;
+			import windows.item.ItemSceneWindow;
+			import windows.provider.ProviderSceneWindow;
+			import windows.cart.CartSceneWindow;
+			import windows.porder.porderSceneWindow;
+			import windows.backdraw.backdrawSceneWindow;
+			import windows.paytype.PaytypeSceneWindow;
+			import windows.store.storeSceneWindow;
+			import windows.storeInOut.storeInOutSceneWindow;
+			import myAs.AdminF;
+			import windows.reportforms.chartWin;
+			import windows.store.storeSceneWindow;
+			import mx.events.CloseEvent;
+			import windows.reportforms.*;
+			
+			private var baseWindow:BaseWindow;
+			public var mainAdmin : AdminF;
+			
+			protected function deskitem1_clickHandler(event:MouseEvent):void
+			{
+				baseWindow = WindowManager.get("baseWindow") as BaseWindow;
+				if (!baseWindow) 
+				{
+					baseWindow = new BaseWindow();
+					baseWindow.id = "baseWindow";
+				}
+				baseWindow.show();
+			}
+			
+			protected function deskitem2_clickHandler(event:MouseEvent):void
+			{
+				var win:SkinWindow = new SkinWindow();
+				win.show();
+			}
+			
+			protected function deskitem3_clickHandler(event:MouseEvent):void
+			{
+				var win:ModalWindow = new ModalWindow();
+				win.show();
+			
+			}
+			
+			protected function deskitem4_clickHandler(event:MouseEvent):void
+			{
+				var win:PromptWindow = new PromptWindow();
+				win.show();
+			}
+			
+
+			
+			protected function adminManager_clickHandler(event:MouseEvent):void
+			{
+				
+				if(mainAdmin.rank!=0){
+					Alert.show("您没有该权限");
+					return;
+				}
+				var adminScene:AdminSceneWindow = new AdminSceneWindow();
+				adminScene.x=FlexGlobals.topLevelApplication.stage.stageWidth/2-adminScene.width/2;
+				adminScene.y=FlexGlobals.topLevelApplication.stage.stageHeight/2-adminScene.height/2;
+				adminScene.resizable = false;
+				adminScene.maximizable = false;
+				adminScene.show();
+			}
+
+			
+			protected function userManager_clickHandler(event:MouseEvent):void
+			{	
+				
+				if(mainAdmin.rank!=0 && mainAdmin.rank!=3){
+				Alert.show("您没有该权限");
+				return;
+			    }
+				
+				var userScene:UserSceneWindow = new UserSceneWindow();
+				userScene.x=FlexGlobals.topLevelApplication.stage.stageWidth/2-userScene.width/2;
+				userScene.y=FlexGlobals.topLevelApplication.stage.stageHeight/2-userScene.height/2;
+				userScene.resizable = false;
+				userScene.maximizable = false;
+				userScene.show();
+			}
+			protected function 	categoryManager_clickHandler(event:MouseEvent):void
+			{
+				if(mainAdmin.rank!=0 && mainAdmin.rank!=1){
+					Alert.show("您没有该权限");
+					return;
+				}
+				var categoryScene:CategorySceneWindow = new CategorySceneWindow();
+				categoryScene.x=FlexGlobals.topLevelApplication.stage.stageWidth/2-categoryScene.width/2;
+				categoryScene.y=FlexGlobals.topLevelApplication.stage.stageHeight/2-categoryScene.height/2;
+				categoryScene.resizable = false;
+				categoryScene.maximizable = false;
+				categoryScene.show();
+			}
+		
+			protected function 	itemManager_clickHandler(event:MouseEvent):void
+			{
+				if(mainAdmin.rank!=0 && mainAdmin.rank!=1){
+					Alert.show("您没有该权限");
+					return;
+				}
+				var itemScene:ItemSceneWindow = new ItemSceneWindow();
+				itemScene.x=FlexGlobals.topLevelApplication.stage.stageWidth/2-itemScene.width/2;
+				itemScene.y=FlexGlobals.topLevelApplication.stage.stageHeight/2-itemScene.height/2;
+				itemScene.resizable = false;
+				itemScene.maximizable = false;
+				itemScene.show();
+			}
+			
+			protected function 	providerManager_clickHandler(event:MouseEvent):void
+			{
+				if(mainAdmin.rank!=0  && mainAdmin.rank!=1){
+					Alert.show("您没有该权限");
+					return;
+				}
+				var providerScene:ProviderSceneWindow = new ProviderSceneWindow();
+				providerScene.x=FlexGlobals.topLevelApplication.stage.stageWidth/2-providerScene.width/2;
+				providerScene.y=FlexGlobals.topLevelApplication.stage.stageHeight/2-providerScene.height/2;
+				providerScene.resizable = false;
+				providerScene.maximizable = false;
+				providerScene.show();
+			}
+		
+			protected function 	chartManager_clickHandler(event:MouseEvent):void
+			{
+				if(mainAdmin.rank!=0  && mainAdmin.rank!=1){
+					Alert.show("您没有该权限");
+					return;
+				}
+			
+				var reportWin:chartWin = new chartWin();
+				reportWin.x=FlexGlobals.topLevelApplication.stage.stageWidth/2-reportWin.width/2;
+				reportWin.y=FlexGlobals.topLevelApplication.stage.stageHeight/2-reportWin.height/2;
+				reportWin.resizable = false;
+				reportWin.maximizable = false;
+				reportWin.show();
+			}
+			
+
+			
+			protected function 	porderManager_clickHandler(event:MouseEvent):void
+			{
+				if(mainAdmin.rank!=0  && mainAdmin.rank!=1){
+					Alert.show("您没有该权限");
+					return;
+				}
+				var porderWin:porderSceneWindow = new porderSceneWindow();
+				porderWin.x=FlexGlobals.topLevelApplication.stage.stageWidth/2-porderWin.width/2;
+				porderWin.y=FlexGlobals.topLevelApplication.stage.stageHeight/2-porderWin.height/2;
+				porderWin.resizable = false;
+				porderWin.maximizable = false;
+				porderWin.show();
+			}
+			
+			
+			
+			protected function 	backManager_clickHandler(event:MouseEvent):void
+			{
+				if(mainAdmin.rank!=0  && mainAdmin.rank!=1){
+					Alert.show("您没有该权限");
+					return;
+				}
+				var backWin:backdrawSceneWindow = new backdrawSceneWindow();
+				backWin.x=FlexGlobals.topLevelApplication.stage.stageWidth/2-backWin.width/2;
+				backWin.y=FlexGlobals.topLevelApplication.stage.stageHeight/2-backWin.height/2;
+				backWin.resizable = false;
+				backWin.maximizable = false;
+				backWin.show();
+			}
+			
+	
+			
+			protected function 	paytypeManager_clickHandler(event:MouseEvent):void
+			{
+				if(mainAdmin.rank!=0  && mainAdmin.rank!=1){
+					Alert.show("您没有该权限");
+					return;
+				}
+				var PayWin:PaytypeSceneWindow = new PaytypeSceneWindow();
+				PayWin.x=FlexGlobals.topLevelApplication.stage.stageWidth/2-PayWin.width/2;
+				PayWin.y=FlexGlobals.topLevelApplication.stage.stageHeight/2-PayWin.height/2;
+				PayWin.resizable = false;
+				PayWin.maximizable = false;
+				PayWin.show();
+			}
+			
+			protected function 	storeinoutManager_clickHandler(event:MouseEvent):void
+			{
+				if(mainAdmin.rank!=0  && mainAdmin.rank!=2){
+					Alert.show("您没有该权限");
+					return;
+				}
+				var storeWin:storeInOutSceneWindow = new storeInOutSceneWindow();
+				storeWin.x=FlexGlobals.topLevelApplication.stage.stageWidth/2-storeWin.width/2;
+				storeWin.y=FlexGlobals.topLevelApplication.stage.stageHeight/2-storeWin.height/2;
+				storeWin.resizable = false;
+				storeWin.maximizable = false;
+				storeWin.show();
+			}
+			
+			protected function 	excelManager_clickHandler(event:MouseEvent):void
+			{
+				if(mainAdmin.rank!=0  && mainAdmin.rank!=1){
+					Alert.show("您没有该权限");
+					return;
+				}
+				var storeWin:excelWin = new excelWin();
+				storeWin.x=FlexGlobals.topLevelApplication.stage.stageWidth/2-storeWin.width/2;
+				storeWin.y=FlexGlobals.topLevelApplication.stage.stageHeight/2-storeWin.height/2;
+				storeWin.resizable = false;
+				storeWin.maximizable = false;
+				storeWin.show();
+			}
+			protected function 	cartManager_clickHandler(event:MouseEvent):void
+			{
+				if(mainAdmin.rank!=0  && mainAdmin.rank!=1){
+					Alert.show("您没有该权限");
+					return;
+				}
+				var cartScene:CartSceneWindow = new CartSceneWindow();
+				cartScene.x=FlexGlobals.topLevelApplication.stage.stageWidth/2-cartScene.width/2;
+				cartScene.y=FlexGlobals.topLevelApplication.stage.stageHeight/2-cartScene.height/2;
+				cartScene.resizable = false;
+				cartScene.maximizable = false;
+				cartScene.show();
+			}
+			
+			
+			protected function 	storeManager_clickHandler(event:MouseEvent):void
+			{
+				if(mainAdmin.rank!=0  && mainAdmin.rank!=2){
+					Alert.show("您没有该权限");
+					return;
+				}
+				var storeWin:storeSceneWindow = new storeSceneWindow();
+				storeWin.x=FlexGlobals.topLevelApplication.stage.stageWidth/2-storeWin.width/2;
+				storeWin.y=FlexGlobals.topLevelApplication.stage.stageHeight/2-storeWin.height/2;
+				storeWin.resizable = false;
+				storeWin.maximizable = false;
+				storeWin.show();
+			}
+			
+			public function logoutBack():void
+			{ 
+				
+				if(mainAdmin==null)
+				{
+					Alert.show("您还未登陆");
+				}
+				
+				else
+				{
+					Alert.show("确定注销吗",
+						"用户注销",
+						Alert.YES|Alert.NO,
+						null,
+						logout);
+				
+				}
+			}
+			public function logout(E: CloseEvent):void
+			{
+				if (E.detail == Alert.YES){
+				   mainAdmin=null;
+				   this.currentState = "loginState";
+				}
+			}
+			
+			protected function 	adminlogin_clickHandler(event:MouseEvent):void
+			{
+				
+				var loginWin:loginWindow = new loginWindow();
+				loginWin.x=FlexGlobals.topLevelApplication.stage.stageWidth/2-loginWin.width/2;
+				loginWin.y=FlexGlobals.topLevelApplication.stage.stageHeight/2-loginWin.height/2;
+				loginWin.resizable = false;
+				loginWin.maximizable = false;
+		
+				loginWin.show();
+				
+			}
+			
+			private var trayIconWindow:Window;
+			private var trayIcon:TrayIcon;
+			protected function deskitem5_clickHandler(event:MouseEvent):void
+			{
+				trayIconWindow = WindowManager.get("trayIconWindow");
+				if (!trayIconWindow) 
+				{
+					trayIconWindow = new Window("系统托盘演示");
+					trayIconWindow.id = "trayIconWindow";
+					trayIconWindow.width = 300;
+					trayIconWindow.height = 170;
+					trayIconWindow.x = 350;
+					trayIconWindow.y = 130;
+					//trayIconWindow.taskbarButton.hide();
+					
+					trayIcon = new TrayIcon();
+					trayIcon.label = trayIconWindow.title;
+					trayIcon.setImage("images/icon.png");
+					
+					trayIcon.addEventListener(MouseEvent.CLICK, function(event:MouseEvent):void{
+						trayIconWindow.show();
+						trayIcon.stopFlashImage();
+					});
+					trayIconWindow.addEventListener(WindowEvent.WINDOW_CLOSED,function(event:WindowEvent):void{
+						trayIcon.destroy()
+					});
+					
+					var btn1:Button = new Button();
+					btn1.label = "闪烁托盘图标";
+					btn1.x = 20;
+					btn1.y = 20;
+					btn1.addEventListener(MouseEvent.CLICK, function(event:MouseEvent):void{
+						trayIcon.startFlashImage(500);
+					});
+					
+					trayIconWindow.addElement(btn1);
+				}
+				trayIconWindow.show();
+			}
+			
+			protected function deskitem6_clickHandler(event:MouseEvent):void
+			{
+				var win:DesktopWindow = new DesktopWindow("隐藏的系统托盘演示");
+				win.width = 420;
+				win.height = 250;
+				win.x = 100;
+				win.y = 100;
+				win.taskbarButton.hide();
+				var trayIcon:TrayIcon = new TrayIcon(false);
+				trayIcon.label = win.title;
+				trayIcon.setImage("images/icon.png");
+				trayIcon.addEventListener(MouseEvent.CLICK, function(event:MouseEvent):void{
+					win.show();
+			
+				});
+				win.addEventListener(WindowEvent.WINDOW_CLOSED,function(event:WindowEvent):void{
+					trayIcon.destroy()
+				});
+				var text:Label = new Label();
+				text.text = "点击屏幕右下角系统时间左边的三角箭头按钮就可以看到隐藏的托盘图标";
+				text.x = text.y = 20;
+				win.addElement(text);
+				win.show();
+			}
+			
+
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		
+	</fx:Declarations>
+	
+	
+	<s:VGroup includeIn="loginState" left="10" top="10" gap="10">
+		<components:DeskItem label="管理员登录" iconurl= "images/login.png" click="adminlogin_clickHandler(event)" />
+	</s:VGroup>
+	
+	<s:VGroup includeIn="mainState" left="10" top="10" gap="10">
+		
+		<components:DeskItem label="管理员管理" iconurl= "images/adminM.png" click="adminManager_clickHandler(event)" />
+		<components:DeskItem label="药品分类列表" iconurl= "images/CM.png" click="categoryManager_clickHandler(event)" />
+		<components:DeskItem label="用户管理" iconurl= "images/userM.png" click="userManager_clickHandler(event)" />
+		<components:DeskItem label="药品管理" iconurl= "images/itemM.png" click="itemManager_clickHandler(event)" />
+		<components:DeskItem label="供应商管理" iconurl= "images/proM.png" click="providerManager_clickHandler(event)" />
+		<components:DeskItem label="订单管理" iconurl= "images/orderM.png" click="cartManager_clickHandler(event)" />
+		<components:DeskItem label="仓库管理" iconurl= "images/StoreM.png" click="storeManager_clickHandler(event)" />
+		
+	</s:VGroup>
+	
+	<s:VGroup includeIn="mainState" left="120" top="10" gap="10">
+		
+		<components:DeskItem label="进货记录" iconurl= "images/porderM.png" click="porderManager_clickHandler(event)" />
+		<components:DeskItem label="退货管理" iconurl= "images/backM.png" click="backManager_clickHandler(event)" />
+		<components:DeskItem label="付款方式管理" iconurl= "images/typeM.png" click="paytypeManager_clickHandler(event)" />
+		<components:DeskItem label="仓库进出记录" iconurl= "images/inOutM.png" click="storeinoutManager_clickHandler(event)" />
+		<components:DeskItem label="生成Excel报表" iconurl= "images/formsM.png" click="excelManager_clickHandler(event)" />
+		<components:DeskItem label="生成统计图" iconurl= "images/chart.png" click="chartManager_clickHandler(event)" />
+		
+	</s:VGroup>
+	<container:WindowsContainer left="0" top="0" right="0" bottom="40"/>
+	
+	<components:Taskbar callFunction="logoutBack" width="100%" height="40" bottom="0"/>
+	
+</s:Application>

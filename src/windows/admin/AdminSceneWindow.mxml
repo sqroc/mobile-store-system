@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"   creationComplete="initWindow()" width="700" height="350" title="管理员">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	<fx:Declarations>
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="Admin"   
+						 destination="adminManager" channelSet="{cs}">
+			<mx:method name="getAdmins" result="handleResult_getAdmins(event)"/> 
+			<mx:method name="deleletByid" result="handleResult_deleletByid(event)"/> 
+			<mx:method name="getTotalNum" result="handleResult_getTotalNum(event)"/> 
+			
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.controls.Image;
+			import mx.core.FlexGlobals;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			
+			import myAs.AdminF;
+			
+			import net.lanelife.framework.cw.Dialog;
+			import net.lanelife.framework.cw.Dimension;
+			import net.lanelife.framework.cw.Window;
+			
+		
+			
+			[Bindable] 
+		    public var systemAdmins:ArrayUtil = new ArrayUtil(); 
+			
+			[Bindable]
+            private var pageNumber : int = 1;
+			
+			[Bindable]
+			private var pageLimit : int = 8;
+			
+			[Bindable]
+			private var TotalNum : int = -1;
+			
+			[Bindable]
+			private var TotalPageNum : int = -1;
+			//专用回调函数 ，替代 initWindow 刷新数据时留在先前页
+			public function childCallback():void
+			{
+				Admin.getTotalNum();	
+				Admin.getAdmins((pageNumber-1)*pageLimit,pageLimit);
+			}
+			private function makeTotalPageNum():void
+			{
+				if(TotalNum % pageLimit ==0)
+				{
+					TotalPageNum = TotalNum/pageLimit;
+				}
+				else 
+					TotalPageNum = TotalNum/pageLimit + 1;
+			}
+			
+			
+			protected function initWindow():void
+			{
+				Admin.getTotalNum();
+                Admin.getAdmins(0,pageLimit);
+			}
+	
+			
+			public function handleResult_deleletByid(event:ResultEvent):void
+			{
+				var flag : int = int(event.result);
+			
+				if(flag!=-1){
+					childCallback();
+					Admin.getAdmins((pageNumber-1)*pageLimit,pageLimit);
+				}else{
+					Alert.show("删除错误");
+				}
+				
+			}
+			public function handleResult_getTotalNum(event:ResultEvent):void
+			{
+				TotalNum  = int(event.result);
+				makeTotalPageNum();
+			
+				
+			}
+			
+			public function handleResult_getAdmins(event:ResultEvent):void
+			{
+				 
+				var tempList :  Array ;
+				if(event.result!=null){
+					tempList= ArrayUtil.toArray(event.result);
+					adminList.dataProvider=tempList[0];
+				}else{
+					Alert.show("没有找到相关任务信息");
+				}
+
+			}	
+			public function	deleteAdmins(event:MouseEvent):void
+			{
+		
+				var  id : int  = int(adminList.selectedItem.aid);
+				if(id!=0)
+				{
+				  Admin.deleletByid(id);
+				}
+			
+			}
+			
+			public function showAddAdmins(event:MouseEvent):void
+		    {
+
+			   var adminWin:adminAddWindow  = adminAddWindow(PopUpManager.createPopUp(this,adminAddWindow,false));
+			   adminWin.resizable = false;
+			   adminWin.maximizable = false;
+			   adminWin.callFunction = this.childCallback; // 子窗体中可以调用的父窗体函数（这里是子窗体关闭时，用来刷新父窗体的内容 
+			   PopUpManager.centerPopUp(adminWin);
+			   
+		 }
+			
+			
+			protected function showUpdateAdmins(event:MouseEvent):void
+			{
+				
+				var tempAdmin : AdminF = new AdminF();
+				tempAdmin.aid = adminList.selectedItem.aid;
+				tempAdmin.username = adminList.selectedItem.username;
+				tempAdmin.password = adminList.selectedItem.password;
+				tempAdmin.rank = 	adminList.selectedItem.rank;
+				tempAdmin.gender = 	adminList.selectedItem.gender;
+				tempAdmin.addDate = adminList.selectedItem.addDate;
+				
+				
+				var adminWin:adminUpdateWindow  = adminUpdateWindow(PopUpManager.createPopUp(this,adminUpdateWindow,false));
+			    adminWin.resizable = false;
+				adminWin.maximizable = false;
+				adminWin.tempData = tempAdmin;
+				adminWin.callFunctionUpdate = this.childCallback; // 子窗体中可以调用的父窗体函数（这里是子窗体关闭时，用来刷新父窗体的内容 
+				PopUpManager.centerPopUp(adminWin);
+			
+			}
+			
+			//上一页
+			private function prePage():void{
+				if(pageNumber > 1){
+					pageNumber -= 1;
+					Admin.getAdmins((pageNumber-1)*pageLimit,pageLimit);
+					
+				}
+			}
+			//下一页
+			private function nextPage():void{
+				if(pageNumber < this.pageChoice.maximum){
+					pageNumber += 1;
+					Admin.getAdmins((pageNumber-1)*pageLimit,pageLimit);
+				//	pageNumber += 1;
+				}
+			}
+			//跳转至
+			private function jumpPage():void{
+			
+				Admin.getAdmins((pageChoice.value-1)*pageLimit,pageLimit);
+			}
+//			private function changeLimite():void{
+//				
+//				pageLimit = Limite.value;
+//				makeTotalPageNum();
+//				Admin.getAdmins((pageChoice.value-1)*pageLimit,pageLimit);
+//			}
+
+		]]>
+	</fx:Script>
+	
+
+
+	<mx:HDividedBox width="100%" height="100%" >
+		
+		<s:VGroup  height="100%" width="100%">
+			<s:HGroup width="90%" height="10%">
+				<mx:ApplicationControlBar width="690" dock="true">
+				<s:Label text="当前选着的管理员：" height="30" verticalAlign="middle" textAlign="center"/>
+				<s:Label id="curadminName" width="229" verticalAlign="middle" textAlign="center" height="30" text="用户名 : {adminList.selectedItem.username}  权限为 : {adminList.selectedItem.rank} "/>
+				<s:Button label="删除当前" id="deleteAdminBonF" height="30" width="95"  click="deleteAdmins(event)"/>
+					<s:Button label="添加" id="addadminBon" width="85" height="30"  click="showAddAdmins(event)"/>
+					<s:Button label="修改" id="updateadminBon" width="85" height="30" click="showUpdateAdmins(event)"/>
+				</mx:ApplicationControlBar>
+			</s:HGroup>
+		
+			
+			<s:HGroup width="100%" height="60%"  >
+				<mx:AdvancedDataGrid horizontalCenter="0" id="adminList" dataProvider="{systemAdmins}" designViewDataType="flat" width="100%" height="100%">
+					<mx:columns>
+						<mx:AdvancedDataGridColumn  width="40"  headerText="Id" dataField="aid"/>
+						<mx:AdvancedDataGridColumn  width="100" headerText="用户名" dataField="username" />
+						<mx:AdvancedDataGridColumn  width="100" headerText="密码" dataField="password" />
+						<mx:AdvancedDataGridColumn  width="80" headerText="权限等级" dataField="rank" />
+						
+						<mx:AdvancedDataGridColumn  width="250" headerText="添加日期" dataField="addDate"/>
+					</mx:columns>
+				</mx:AdvancedDataGrid>
+			</s:HGroup>
+			
+			<s:HGroup width="90%" height="10%" verticalAlign="bottom" >
+				<mx:ApplicationControlBar width="690" dock="true">
+					<s:Label width="200" text=""/>	
+				<s:Button id="preBon" label="上一页" click="prePage()"/>
+				<s:Button id="nextBon" label="下一页" click="nextPage()"/>
+				<s:Button id="jumpBon" label="跳转至" click="jumpPage()" />
+				<s:NumericStepper id="pageChoice" minimum="1" maximum="{TotalPageNum}" value="{pageNumber}" width="50" height="21" y="7"/>
+				<s:Label  verticalAlign="middle" text="页" width="33" height="22" y="6"  textAlign="center"/>
+				
+                <s:Label textAlign="center" verticalAlign="middle" text="  共{TotalPageNum}页      {TotalNum}条记录" width="160" height="22" y="6"/>
+					</mx:ApplicationControlBar>
+			</s:HGroup>
+			<!--
+			<s:HGroup width="90%" height="10%" verticalAlign="bottom" >
+				<s:NumericStepper id="Limite" minimum="4"  maximum="10" value="{pageLimit}" width="50" height="21" y="7"/>
+				<s:Label  verticalAlign="middle" text="条每页" width="50" height="22" y="6"  textAlign="center"/>
+				<s:Button id="LimiteBon" label="更改" click="changeLimite()" />
+				
+			</s:HGroup>
+			-->
+		</s:VGroup >
+		
+		
+	</mx:HDividedBox>
+	
+	
+
+</cw:DesktopWindow>

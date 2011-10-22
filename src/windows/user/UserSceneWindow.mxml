@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"   creationComplete="initWindow()" width="800" height="400" title="用户管理">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	<fx:Declarations>
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="User"   
+						 destination="userManager" channelSet="{cs}">
+			<mx:method name="getUsers" result="handleResult_getUsers(event)"/> 
+			<mx:method name="deleletByid" result="handleResult_deleletByid(event)"/> 
+			<mx:method name="getTotalNum" result="handleResult_getTotalNum(event)"/> 
+			
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.controls.Image;
+			import mx.core.FlexGlobals;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			
+			import myAs.UserF;
+			
+			import net.lanelife.framework.cw.Dialog;
+			import net.lanelife.framework.cw.Dimension;
+			import net.lanelife.framework.cw.Window;
+			
+		
+			
+			[Bindable] 
+		    public var Users:ArrayUtil = new ArrayUtil(); 
+			
+			[Bindable]
+            private var pageNumber : int = 1;
+			
+			[Bindable]
+			private var pageLimit : int = 6;
+			
+			[Bindable]
+			private var TotalNum : int = -1;
+			
+			[Bindable]
+			private var TotalPageNum : int = -1;
+			
+			
+			[Bindable]
+			public var  searchCode: int = 0;
+			[Bindable]
+			public var  searchValue: String = "";
+			
+			//专用回调函数 ，替代 initWindow 刷新数据时留在先前页
+			public function childCallback():void
+			{
+				User.getTotalNum(searchValue,searchCode);	
+				User.getUsers(searchValue,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+			}
+			private function makeTotalPageNum():void
+			{
+				if(TotalNum % pageLimit ==0)
+				{
+					TotalPageNum = TotalNum/pageLimit;
+				}
+				else 
+					TotalPageNum = TotalNum/pageLimit + 1;
+			}
+			
+			
+			protected function initWindow():void
+			{
+				User.getTotalNum(searchValue,searchCode);
+				User.getUsers(searchValue,0,pageLimit,searchCode);
+			}
+	
+			
+		
+			
+			public function handleResult_deleletByid(event:ResultEvent):void
+			{
+				var flag : int = int(event.result);
+			
+				if(flag==1){
+					Alert.show("删除成功");
+					childCallback();
+					User.getUsers(searchValue,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+				}else{
+					Alert.show("删除失败，该用户有关订单尚未删除");
+				}
+				
+			}
+			public function handleResult_getTotalNum(event:ResultEvent):void
+			{
+				TotalNum  = int(event.result);
+				makeTotalPageNum();
+
+				
+			}
+			
+		
+			public function handleResult_getUsers(event:ResultEvent):void
+			{
+				 
+				var tempList :  Array ;
+				if(event.result!=null){
+					tempList= ArrayUtil.toArray(event.result);
+					userList.dataProvider=tempList[0];
+				}else{
+					Alert.show("没有找到相关任务信息");
+				}
+
+			}	
+			
+			
+			public function	searchByusername(event:MouseEvent):void
+			{
+				searchCode=1;
+				searchValue=String(bynameV.text);
+				User.getTotalNum(searchValue,searchCode);	
+				User.getUsers(searchValue,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+			}
+			
+			public function	showAllUser(event:MouseEvent):void
+			{
+				searchCode=0;
+				searchValue="";
+				User.getTotalNum(searchValue,searchCode);	
+				User.getUsers(searchValue,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+			}
+			
+			
+			public function	deleteUser(event:MouseEvent):void
+			{
+		
+				var  id : int  = int(userList.selectedItem.uid);
+				if(id!=0)
+				{
+					User.deleletByid(id);
+				  
+				}
+			
+			}
+			
+			public function showAddUser(event:MouseEvent):void
+		    {
+
+			   var userWin:userAdd  = userAdd(PopUpManager.createPopUp(this,userAdd,false));
+			   userWin.resizable = false;
+			   userWin.maximizable = false;
+			   userWin.callFunction = this.childCallback; // 子窗体中可以调用的父窗体函数（这里是子窗体关闭时，用来刷新父窗体的内容 
+			   PopUpManager.centerPopUp(userWin);
+			   
+		 }
+		
+			
+			protected function showUpdateUser(event:MouseEvent):void
+			{
+				
+				var tempUser : UserF = new UserF();
+				tempUser.uid = userList.selectedItem.uid;
+				tempUser.username = userList.selectedItem.username;
+				tempUser.password = userList.selectedItem.password;
+				tempUser.realname = userList.selectedItem.realname;
+				tempUser.postcode = userList.selectedItem.postcode;
+				tempUser.address = userList.selectedItem.address;
+				tempUser.money = userList.selectedItem.money;
+				tempUser.phone = userList.selectedItem.phone;
+						
+				var userWin:userUpdate  = userUpdate(PopUpManager.createPopUp(this,userUpdate,false));
+			    userWin.resizable = false;
+				userWin.maximizable = false;
+				userWin.tempData = tempUser;
+				userWin.callFunctionUpdate = this.childCallback; // 子窗体中可以调用的父窗体函数（这里是子窗体关闭时，用来刷新父窗体的内容 
+				PopUpManager.centerPopUp(userWin);
+			
+			}
+			
+			//上一页
+			private function prePage():void{
+				if(pageNumber > 1){
+					pageNumber -= 1;
+					User.getUsers(searchValue,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+					
+				}
+			}
+			//下一页
+			private function nextPage():void{
+				if(pageNumber < this.pageChoice.maximum){
+					pageNumber += 1;
+					User.getUsers(searchValue,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+			
+				}
+			}
+			//跳转至
+			private function jumpPage():void{
+			
+				User.getUsers(searchValue,(pageChoice.value-1)*pageLimit,pageLimit,searchCode);
+			}
+//			private function changeLimite():void{
+//				
+//				pageLimit = Limite.value;
+//				makeTotalPageNum();
+//				User.getUsers(searchValue,(pageChoice.value-1)*pageLimit,pageLimit,searchCode);
+//			}
+
+		]]>
+	</fx:Script>
+	
+
+
+	<mx:HDividedBox width="100%" height="100%" >
+		
+		<s:VGroup  height="100%" width="100%">
+			<s:HGroup width="100%" height="10%">
+				<s:Label text="当前用户：" height="30" verticalAlign="middle" textAlign="center"/>
+				<s:Label id="curadminName" width="229" verticalAlign="middle" textAlign="center" height="30" text="真实姓名：  {userList.selectedItem.realname}  余额￥{userList.selectedItem.money}"/>
+				<s:Button label="删除当前" id="deleteUserBon" height="30" width="85"  click="deleteUser(event)"/>
+				<s:Button label="添加" id="addUserBon" width="85" height="30"  click="showAddUser(event)"/>
+				<s:Button label="修改" id="updateUserBon" width="85" height="30" click="showUpdateUser(event)"/>
+			</s:HGroup>
+			<s:HGroup width="100%" height="10%">
+				<mx:ApplicationControlBar width="790" dock="true">
+				<mx:TextInput id="bynameV" width="200" maxChars="100" text="请输入用户名" height="25"/>
+			    <s:Button label="搜索" id="searchUserBon" width="85" height="25" click="searchByusername(event)"/>
+				<s:Button label="显示全部" id="showallBon" width="85" height="25" click="showAllUser(event)"/>
+				</mx:ApplicationControlBar>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" height="50%">
+				
+				
+				<mx:AdvancedDataGrid  id="userList" dataProvider="{Users}" designViewDataType="flat" width="100%" height="100%" >
+					<mx:columns>
+						<mx:AdvancedDataGridColumn  width="30" headerText="Id" dataField="uid"/>
+						<mx:AdvancedDataGridColumn  width="60" headerText="用户名" dataField="username" />
+						<mx:AdvancedDataGridColumn  width="60" headerText="密码" dataField="password" />
+						<mx:AdvancedDataGridColumn  width="60" headerText="真名" dataField="realname" />
+					    <mx:AdvancedDataGridColumn  width="60" headerText="手机" dataField="phone"/>
+						<mx:AdvancedDataGridColumn  width="60" headerText="邮编" dataField="postcode"/>
+						<mx:AdvancedDataGridColumn  width="120" headerText="地址" dataField="address" />
+						<mx:AdvancedDataGridColumn  width="40" headerText="余额" dataField="money"/>
+					</mx:columns>
+				</mx:AdvancedDataGrid>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" height="10%" verticalAlign="bottom" >
+				<mx:ApplicationControlBar width="790" dock="true">
+					<s:Label width="300" text=""/>
+				<s:Button id="preBon" label="上一页" click="prePage()"/>
+				<s:Button id="nextBon" label="下一页" click="nextPage()"/>
+				<s:Button id="jumpBon" label="跳转至" click="jumpPage()" />
+				<s:NumericStepper id="pageChoice" minimum="1" maximum="{TotalPageNum}" value="{pageNumber}" width="50" height="21" y="7"/>
+				<s:Label  verticalAlign="middle" text="页" width="33" height="22" y="6"  textAlign="center"/>
+				
+                <s:Label textAlign="center" verticalAlign="middle" text="  共{TotalPageNum}页      {TotalNum}条记录" width="160" height="22" y="6"/> 
+				</mx:ApplicationControlBar>
+			</s:HGroup>
+			<!--
+			<s:HGroup width="100%" height="10%" verticalAlign="bottom" >
+				<s:NumericStepper id="Limite" minimum="4"  maximum="10" value="{pageLimit}" width="50" height="21" y="7"/>
+				<s:Label  verticalAlign="middle" text="条每页" width="50" height="22" y="6"  textAlign="center"/>
+				<s:Button id="LimiteBon" label="更改" click="changeLimite()" />
+				
+			</s:HGroup>-->
+		</s:VGroup >
+		
+		
+	</mx:HDividedBox>
+	
+	
+<!--	+"页"+" "+"{TotalNum}"+" 条记录"-->
+</cw:DesktopWindow>

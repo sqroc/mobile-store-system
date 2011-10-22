@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx" 
+		   xmlns:cw="net.lanelife.framework.cw.*" 
+		   width="400" height="300" x="330" y="110"
+		   title="提示对话框演示">
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.events.CloseEvent;
+			
+			import net.lanelife.framework.cw.Prompt;
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				Prompt.buttonAlign = "center";
+				Prompt.yesLabel = "好用";
+				Prompt.noLabel = "不好用";
+				Prompt.show(this,
+					"您觉得CatWindows框架好用吗?",
+					"请评价",
+					Prompt.YES|Prompt.NO,
+					promptCloseHandler,
+					"images/plaint.png",
+					Prompt.YES);
+			}
+			
+			private function promptCloseHandler(event:CloseEvent):void {  
+				if (event.detail==Prompt.YES)  
+					info.text = "您对CatWindows框架的评价是：好用";
+				else  
+					info.text = "您对CatWindows框架的评价是：不好用";
+			}  
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:Button label="弹出对话框" x="20" y="30" click="button1_clickHandler(event)" />
+	<s:Label id="info" x="20" y="80" fontSize="18"/>
+</cw:DesktopWindow>

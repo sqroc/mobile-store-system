@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"  creationComplete="init()"   width="400" height="470" title="修改供应商信息">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	
+	
+	
+	
+	<fx:Declarations>
+	
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="Provider"   
+						 destination="providerManager" channelSet="{cs}">
+			<mx:method name="modify" result="handleResult_modify(event)"/> 
+			
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;
+			import myAs.ProviderF;
+			public var callFunctionUpdate:Function;//回调函数
+			public var tempData:ProviderF ;
+			private var tempProvider : ProviderF = new ProviderF();
+			
+
+			
+			
+			private function updateSubmit() : void
+			{	
+				var tempProvider : ProviderF = new ProviderF();
+				tempProvider.pid = tempData.pid;
+				tempProvider.name = String(username.text);
+			    tempProvider.supervisor = String(supervisor.text);
+				tempProvider.phone = String(phone.text);
+				tempProvider.address = String(address.text);
+				tempProvider.postcode = String(postcode.text);
+			    Provider.modify(tempProvider);
+				PopUpManager.removePopUp(this);
+			
+			}
+			protected function init():void
+			{
+
+			     if(tempData !=null)
+				 {
+					 username.text = tempData.name;
+		             supervisor.text = tempData.supervisor;
+					 phone.text = tempData.phone;
+					 address.text =  tempData.address;
+					 postcode.text = tempData.postcode;
+					
+				 }
+			}
+			
+			protected function updateReset()  : void
+			{
+		        init();
+            }
+			protected function handleResult_modify(event:ResultEvent):void
+			{
+				if(event.result=="succeed")
+				{
+					Alert.show("修改成功");
+				
+					callFunctionUpdate.call(parent);
+					this.close();
+				}
+				else
+					Alert.show("修改失败，供应商名已存在");
+			}
+		
+		]]>
+	</fx:Script>
+
+
+		
+	
+	<mx:Form  x="53" y="28" width="300" height="400">
+		<mx:FormHeading label="请填写用户信息：" textAlign="left" width="191"/>
+		
+		<mx:FormItem label="提供商名">
+			<mx:TextInput id="username" editable="false" width="200" maxChars="100" />
+		</mx:FormItem> 
+		
+		<mx:FormItem label="负责人">
+			<mx:TextInput id="supervisor" width="200" maxChars="100" />
+		</mx:FormItem>
+		
+		<mx:FormItem label="电话">
+			<mx:TextInput id="phone" restrict="0-9" width="200" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="邮编">
+			<mx:TextInput id="postcode" restrict="0-9" width="200" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="详细地址">
+			<mx:TextInput id="address" width="200" maxChars="100" />
+		</mx:FormItem>
+		
+		
+		
+	</mx:Form>
+	<s:Button id ="addS"  x="53" y="255" label="确定" width="101" click="updateSubmit()"/>
+	<s:Button id ="addR"  x="238" y="255" label="重填" width="115" click="updateReset()"/>
+
+</cw:DesktopWindow>

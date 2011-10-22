@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"   creationComplete="initWindow()" width="700" height="350" title="药品分类管理">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	<fx:Declarations>
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="Category"   
+						 destination="categoryManager" channelSet="{cs}">
+			<mx:method name="getCategories" result="handleResult_getCategories(event)"/> 
+			<mx:method name="deleletByid" result="handleResult_deleletByid(event)"/> 
+			<mx:method name="getTotalNum" result="handleResult_getTotalNum(event)"/> 
+			
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import charts.balloonWithRoundedCorners;
+			
+			import mx.controls.Alert;
+			import mx.controls.Image;
+			import mx.core.FlexGlobals;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			
+			import myAs.CategoryF;
+			
+			import net.lanelife.framework.cw.Dialog;
+			import net.lanelife.framework.cw.Dimension;
+			import net.lanelife.framework.cw.Window;
+		
+			
+			[Bindable] 
+		    public var Categories:ArrayUtil = new ArrayUtil(); 
+			
+			[Bindable]
+            private var pageNumber : int = 1;
+			
+			[Bindable]
+			private var pageLimit : int = 8;
+			
+			[Bindable]
+			private var TotalNum : int = -1;
+			
+			[Bindable]
+			private var TotalPageNum : int = -1;
+			//专用回调函数 ，替代 initWindow 刷新数据时留在先前页
+			public function childCallback():void
+			{
+				Category.getTotalNum();	
+				Category.getCategories((pageNumber-1)*pageLimit,pageLimit);
+			}
+			private function makeTotalPageNum():void
+			{
+				if(TotalNum % pageLimit ==0)
+				{
+					TotalPageNum = TotalNum/pageLimit;
+				}
+				else 
+					TotalPageNum = TotalNum/pageLimit + 1;
+			}
+			
+			
+			protected function initWindow():void
+			{
+				Category.getTotalNum();
+				Category.getCategories(0,pageLimit);
+			}
+	
+			
+			public function handleResult_deleletByid(event:ResultEvent):void
+			{
+				var flag : int = int(event.result);
+			
+				if(flag==1){
+					childCallback();
+					Category.getCategories((pageNumber-1)*pageLimit,pageLimit);
+					Alert.show("删除成功");
+				}else{
+					Alert.show("该分类正在被引用，不能被删除");
+				}
+				
+			}
+			public function handleResult_getTotalNum(event:ResultEvent):void
+			{
+				TotalNum  = int(event.result);
+				makeTotalPageNum();
+		
+				
+			}
+			
+			public function handleResult_getCategories(event:ResultEvent):void
+			{
+				 
+				var tempList :  Array ;
+				if(event.result!=null){
+					tempList= ArrayUtil.toArray(event.result);
+				    categoryList.dataProvider=tempList[0];
+					
+					
+					
+//					//test 段
+//					for(var i:int = 0 ; i<=tempList.length;i++)
+//					{
+//						Alert.show(i+" ");
+//					
+//					}
+					
+					
+					
+					
+				}else{
+					Alert.show("没有找到相关任务信息");
+				}
+
+			}	
+			public function	deleteCategory(event:MouseEvent):void
+			{
+			
+		
+				var  id : int  = int(categoryList.selectedItem.cid);
+				if(id!=0)
+				{
+					Category.deleletByid(id);
+				  
+				}
+			
+			}
+			
+			public function showAddCategory(event:MouseEvent):void
+		    {
+			
+			   var categoryWin:categoryAdd  = categoryAdd(PopUpManager.createPopUp(this,categoryAdd,false));
+			   categoryWin.resizable = false;
+			   categoryWin.maximizable = false;
+			   categoryWin.callFunction = this.childCallback; // 子窗体中可以调用的父窗体函数（这里是子窗体关闭时，用来刷新父窗体的内容 
+			   PopUpManager.centerPopUp(categoryWin);
+			   
+		 }
+			
+			
+			protected function showUpdateCategory(event:MouseEvent):void
+			{
+				
+				var tempCategory : CategoryF = new CategoryF();
+				tempCategory.cid = categoryList.selectedItem.cid;
+				tempCategory.name = categoryList.selectedItem.name;
+				
+				
+				
+				var categoryWin:categoryUpdate  = categoryUpdate(PopUpManager.createPopUp(this,categoryUpdate,false));
+				categoryWin.resizable = false;
+				categoryWin.maximizable = false;
+				categoryWin.tempData = tempCategory;
+				categoryWin.callFunctionUpdate = this.childCallback; // 子窗体中可以调用的父窗体函数（这里是子窗体关闭时，用来刷新父窗体的内容 
+				PopUpManager.centerPopUp(categoryWin);
+			
+			}
+			
+//			protected function newchart(event:MouseEvent):void
+//			{
+//				
+//				 var tempChartData:Array = [{propertyTitle:"USA",propertyValue:4252},{propertyTitle:"China",propertyValue:1882},{propertyTitle:"Japan",propertyValue:1809},{propertyTitle:"Germany",propertyValue:1322},{propertyTitle:"UK",propertyValue:1122}];
+//				
+//				var  newchart:balloonWithRoundedCorners = balloonWithRoundedCorners (PopUpManager.createPopUp(this,balloonWithRoundedCorners,false));
+//				
+////  			newchart.chartData = tempChartData;
+////				PopUpManager.centerPopUp(newchart);
+//			}
+//	
+			
+			//上一页
+			private function prePage():void{
+				if(pageNumber > 1){
+					pageNumber -= 1;
+					Category.getCategories((pageNumber-1)*pageLimit,pageLimit);
+					
+				}
+			}
+			//下一页
+			private function nextPage():void{
+				if(pageNumber < this.pageChoice.maximum){
+					pageNumber += 1;
+					Category.getCategories((pageNumber-1)*pageLimit,pageLimit);
+				
+				}
+			}
+			//跳转至
+			private function jumpPage():void{
+			
+				Category.getCategories((pageChoice.value-1)*pageLimit,pageLimit);
+			}
+//			private function changeLimite():void{
+//				
+//				pageLimit = Limite.value;
+//				makeTotalPageNum();
+//				Category.getCategories((pageChoice.value-1)*pageLimit,pageLimit);
+//			}
+
+		]]>
+	</fx:Script>
+	
+
+
+	<mx:HDividedBox width="100%" height="100%" >
+		
+		<s:VGroup  height="100%" width="100%">
+			<s:HGroup width="90%" height="10%">
+				<mx:ApplicationControlBar width="690" dock="true">
+				<s:Label text="当前分类：" height="30" verticalAlign="middle" textAlign="center"/>
+				<s:Label id="curadminName" width="229" verticalAlign="middle" textAlign="center" height="30" text="     {categoryList.selectedItem.name}"/>
+				
+				<s:Button label="删除" id="deleteCateBon" height="30" width="85"  click="deleteCategory(event)"/>
+					<s:Button label="添加" id="addCateBon" width="85" height="30"  click="showAddCategory(event)"/>
+					<s:Button label="修改" id="updateCateBon" width="85" height="30" click="showUpdateCategory(event)"/>
+				</mx:ApplicationControlBar>
+			</s:HGroup>
+		
+			
+			<s:HGroup width="100%" height="60%">
+				<mx:AdvancedDataGrid  id="categoryList" dataProvider="{Categories}" designViewDataType="flat" width="100%" height="100%">
+					<mx:columns>
+						<mx:AdvancedDataGridColumn  width="40"  headerText="Id" dataField="cid"/>
+						<mx:AdvancedDataGridColumn  width="100" headerText="分类名" dataField="name" />
+					</mx:columns>
+				</mx:AdvancedDataGrid>
+			</s:HGroup>
+			
+			<s:HGroup width="90%" height="10%" verticalAlign="bottom" >
+				<mx:ApplicationControlBar width="690" dock="true">
+					<s:Label width="200" text=""/>	
+				<s:Button id="preBon" label="上一页" click="prePage()"/>
+				<s:Button id="nextBon" label="下一页" click="nextPage()"/>
+				<s:Button id="jumpBon" label="跳转至" click="jumpPage()" />
+				<s:NumericStepper id="pageChoice" minimum="1" maximum="{TotalPageNum}" value="{pageNumber}" width="50" height="21" y="7"/>
+				<s:Label  verticalAlign="middle" text="页" width="33" height="22" y="6"  textAlign="center"/>
+			
+                <s:Label textAlign="center" verticalAlign="middle" text="  共{TotalPageNum}页      {TotalNum}条记录" width="160" height="22" y="6"/>
+				</mx:ApplicationControlBar>
+			</s:HGroup>
+			<!--
+			<s:HGroup width="90%" height="10%" verticalAlign="bottom" >
+				<s:NumericStepper id="Limite" minimum="4"  maximum="10" value="{pageLimit}" width="50" height="21" y="7"/>
+				<s:Label  verticalAlign="middle" text="条每页" width="50" height="22" y="6"  textAlign="center"/>
+				<s:Button id="LimiteBon" label="更改" click="changeLimite()" />
+			</s:HGroup>
+			-->
+		</s:VGroup >
+		
+		
+	</mx:HDividedBox>
+	
+	
+
+</cw:DesktopWindow>

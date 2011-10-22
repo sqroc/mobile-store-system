@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"  creationComplete="init()"  width="300" height="400" title="修改付款分类">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	
+	
+	
+	
+	<fx:Declarations>
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="PayType"   
+						 destination="payTypeManager" channelSet="{cs}">
+			<mx:method name="modify" result="handleResult_modify(event)"/> 
+			
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;
+			import myAs.PayTypeF;
+			public var callFunctionUpdate:Function;//回调函数
+			public var tempData:PayTypeF;
+		
+			
+			
+			private function updateSubmit() : void
+			{	
+				var tempPayType : PayTypeF = new PayTypeF();
+				tempPayType.ptid = tempData.ptid;
+				tempPayType.name = String(Cname.text);
+				tempPayType.bankId = String(bankId.text);
+				tempPayType.detail = String(detail.text);
+				tempPayType.memo = String(memo.text);
+				
+				
+				PayType.modify(tempPayType);
+				PopUpManager.removePopUp(this);
+			
+			}
+			protected function init():void
+			{
+
+			     if(tempData !=null)
+				 {
+					 Cname.text = tempData.name;
+					
+					 bankId.text=tempData.bankId; // 帐号ID
+					 detail.text=tempData.detail; // 付款说明
+					 memo.text=tempData.memo; // 备注
+				 }
+			}
+			
+			protected function updateReset()  : void
+			{
+		        init();
+            }
+			protected function handleResult_modify(event:ResultEvent):void
+			{
+				if(event.result=="succeed")
+				{
+					Alert.show("修改成功");
+					
+					callFunctionUpdate.call(parent);
+					this.close();
+				}
+				else
+					Alert.show("修改失败，该分类已存在");
+			}
+		
+		]]>
+	</fx:Script>
+
+
+		
+	<mx:Form x="51" y="29" width="243" height="300">
+		<mx:FormHeading label="修改付款方式" width="76"/>
+		<mx:FormItem label="方式名">
+			<mx:TextInput id="Cname" width="124" editable="false" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="帐号ID">
+			<mx:TextInput id="bankId" width="124" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="详细">
+			<mx:TextInput id="detail" width="124" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="备注">
+			<mx:TextInput id="memo" width="124" maxChars="100" />
+		</mx:FormItem>
+	</mx:Form>
+	<s:Button  id ="updateS" x="77" y="300" label="确定" click="updateSubmit()"/>
+	<s:Button id ="updateR" x="169" y="300" label="重填" click="updateReset()"/>
+
+	
+		
+
+</cw:DesktopWindow>

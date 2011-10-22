@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*" creationComplete="init()" width="400" height="500" title="填写进货明细">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	
+	
+	
+	
+	<fx:Declarations>
+		
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="PorderDetail"   
+						 destination="porderDetailManager" channelSet="{cs}">
+			<mx:method name="save" result="handleResult_save(event)"/> 
+			
+		</mx:RemoteObject> 
+		
+		<mx:RemoteObject id="Item"   
+						 destination="itemManager" channelSet="{cs}">
+		
+<!--			<mx:method name="getNames" result="handleResult_ItemgetNames(event)"/>-->
+			<mx:method name="loadByPnum" result="handleResult_ItemloadByPnum(event)"/>  
+			
+		</mx:RemoteObject> 
+		
+		<mx:RemoteObject id="Store"   
+						 destination="storeManager" channelSet="{cs}">
+			<mx:method name="getNames" result="handleResult_StoregetNames(event)"/>
+			<mx:method name="loadByName" result="handleResult_StoreloadByName(event)"/> 
+			
+		</mx:RemoteObject> 
+	<!--	<mx:RemoteObject id="Provider"   
+						 destination="providerManager" channelSet="{cs}">
+			<mx:method name="getPNames" result="handleResult_ProvidergetPNames(event)"/>
+			<mx:method name="loadByName" result="handleResult_ProviderloadByName(event)"/>
+			
+			
+		</mx:RemoteObject>--> 
+		
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			import myAs.ItemF;
+			import myAs.PayTypeF;
+			import myAs.PorderDetailF;
+			import myAs.PorderF;
+			import myAs.StoreF;
+			public var callFunction:Function;//回调函数
+			
+			public var tempPD : PorderDetailF = new PorderDetailF();
+			public var code_id:String =""
+			public var bontype : String ="replay" ;
+			
+			public var sNameArray:ArrayCollection = new ArrayCollection(); 
+			public var pNameArray:ArrayCollection = new ArrayCollection();
+			
+			
+			protected function addreplay():void
+			{
+				bontype = "replay";
+				addSubmit();
+			}
+			protected function addexit():void
+			{
+				bontype = "exit";
+				addSubmit();
+			}
+		
+			protected function init():void
+			{
+				code.text = code_id;
+				Store.getNames();
+				//Provider.getPNames();
+			
+			}
+//	
+//			protected function handleResult_ProvidergetPNames(event:ResultEvent)
+//			{
+//				var tempList :  Array ;
+//				
+//				tempList= ArrayUtil.toArray(event.result);
+//				pName.dataProvider =tempList[0];
+//				
+//			}
+			
+			protected function handleResult_StoregetNames(event:ResultEvent)
+			{
+				var tempList :  Array ;
+				
+				tempList= ArrayUtil.toArray(event.result);
+				sName.dataProvider =tempList[0];
+				
+			}
+			
+			//
+			protected function handleResult_ItemloadByPnum(event:ResultEvent)
+			{
+				
+				var tempItem:ItemF = ItemF(event.result); 
+				
+				if(tempItem==null)
+				{
+					Alert.show("药品不存在，请添加新药品");
+					return ;
+				
+				}
+				
+				else 
+				{
+					tempPD.item=tempItem;
+				    Store.loadByName(sName.text);
+					
+			    }
+				
+			}
+//			protected function handleResult_ProviderloadByName(event:ResultEvent)
+//			{
+//				var tempProvider:ProviderF = ProviderF(event.result); 
+//				
+//				tempPD.=tempStore;
+//				Provider.loadByName(pName.text);
+//				
+//			}
+//			
+			
+			protected function handleResult_StoreloadByName(event:ResultEvent)
+			{
+				
+				var tempStore :StoreF = StoreF(event.result); 
+				if(tempStore==null)
+				
+					tempPD.store=tempStore;
+					//Provider.loadByName(pName.text);
+					PorderDetail.save(tempPD);
+					PopUpManager.removePopUp(this);
+		
+				
+			}
+			
+			
+			private function addSubmit() : void
+			{	
+				
+				
+				tempPD.code = String(code.text);
+				tempPD.quantity = Number(quantity.text);
+				tempPD.price = Number(price.text);
+			
+				
+				Item.loadByPnum(p_num.text);
+					
+			}
+			protected function addReset()  : void
+			{
+				
+				
+				quantity.text="";
+				price.text=""; // 帐号ID
+				   
+						   
+			}
+			protected function handleResult_save(event:ResultEvent):void
+			{	
+				if(event.result=="succeed"){
+					
+					Alert.show("添加成功");
+					//callFunction.call(parent);
+					
+					if(bontype=="replay")
+					{
+						addReset();
+					}
+					else 
+					{	
+					   this.close();
+					}
+				}
+				else
+					Alert.show("添加失败，该分类已存在");
+				
+				
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<mx:Form x="51" y="29" width="320" height="400">
+		<mx:FormHeading label="填写进货明细" width="76"/>
+		
+		<mx:FormItem label="单据编号">
+			<mx:Label id="code" width="124"  />
+		</mx:FormItem>
+		
+		<mx:FormItem label="药品批号">
+			<mx:TextInput id="p_num" width="124"  />
+		</mx:FormItem>
+		
+		<mx:FormItem label="数量">
+			<mx:TextInput id="quantity" width="124" maxChars="100" />
+		</mx:FormItem>
+		
+		<mx:FormItem label="总价格">
+			<mx:TextInput id="price" width="124" maxChars="100" />
+		</mx:FormItem>
+		
+		<mx:FormItem label="仓库名">
+			<mx:ComboBox id="sName" dataProvider="{sNameArray}"   width="200"  />
+		</mx:FormItem>
+		
+	<!--	<mx:FormItem label="供应商名">
+			<mx:ComboBox id="pName" dataProvider="{pNameArray}"   width="200"  />
+		</mx:FormItem>-->
+		
+		
+
+
+		
+	</mx:Form>
+	<s:Button  id ="adde" x="70" y="300" label="保存并继续" click="addreplay()"/>
+	<s:Button  id ="addx" x="170" y="300" label="保存并推出" click="addexit()"/>
+	<s:Button id ="addR" x="270" y="300" label="重填" click="addReset()"/>
+	
+	
+
+	
+</cw:DesktopWindow>

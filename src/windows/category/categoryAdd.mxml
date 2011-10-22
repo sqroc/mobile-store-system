@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"  width="300" height="400" title="增加药品分类">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	
+	
+	
+	
+	<fx:Declarations>
+		
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="Category"   
+						 destination="categoryManager" channelSet="{cs}">
+			<mx:method name="add" result="handleResult_add(event)"/> 
+		
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			
+			import myAs.CategoryF;
+			
+			public var callFunction:Function;//回调函数
+			
+			
+
+			
+			private function addSubmit() : void
+			{	
+				var tempCategory : CategoryF = new CategoryF();
+				tempCategory.name = String(Cname.text);
+				Category.add(tempCategory);
+				PopUpManager.removePopUp(this);
+		    }
+			protected function addReset()  : void
+			{
+				Cname.text="";
+			}
+			protected function handleResult_add(event:ResultEvent):void
+			{	
+				if(event.result=="succeed"){
+					
+	                Alert.show("添加成功");
+					callFunction.call(parent);
+					this.close();
+				}
+			    else
+			        Alert.show("添加失败，该分类已存在");
+				
+						  
+			}
+		
+		]]>
+	</fx:Script>
+
+	<mx:Form x="51" y="29" width="243" height="129">
+		<mx:FormHeading label="添加药品分类" width="76"/>
+		<mx:FormItem label="分类名">
+			<mx:TextInput id="Cname" width="124" maxChars="100" />
+		</mx:FormItem>
+	</mx:Form>
+	<s:Button  id ="addS" x="77" y="120" label="添加" click="addSubmit()"/>
+	<s:Button id ="addR" x="169" y="120" label="重填" click="addReset()"/>
+		
+
+</cw:DesktopWindow>

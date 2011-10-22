@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx" 
+		   xmlns:cw="net.lanelife.framework.cw.*" 
+		   width="400" height="300" x="300" y="90"
+		   title="模式窗口演示">
+	
+	<fx:Script>
+		<![CDATA[
+			import net.lanelife.framework.cw.Dialog;
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				var win:Dialog = new Dialog("模式窗口", this);
+				win.width = 250;
+				win.height = 150;
+				win.x = 320;
+				win.y = 130;
+				win.show();
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	<s:Button x="10" y="10" label="弹出模式窗口" click="button1_clickHandler(event)" />
+</cw:DesktopWindow>

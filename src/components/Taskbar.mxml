@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 xmlns:cw="net.lanelife.framework.cw.*" 
+		 xmlns:container="net.lanelife.framework.cw.container.*"
+		 creationComplete="init()" xmlns:components="components.*">
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			
+			import myAs.AdminF;
+			
+			import net.lanelife.framework.cw.WindowManager;
+			
+			public var callFunction:Function;//回调函数
+			
+			private var timer:Timer = new Timer(1000);
+			
+			protected function init():void
+			{
+				timer.addEventListener(TimerEvent.TIMER, onTimer);
+				timer.start();
+			}
+			
+			private function onTimer(event:TimerEvent):void
+			{
+				datetime.text = dateFormat.format(new Date());
+			}
+			
+			private var flag:Boolean = true;
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				if(flag)
+					WindowManager.hideAll();
+				else
+					WindowManager.showAll();
+				flag = !flag
+			}
+			
+			public function startBack():void
+			{
+				
+				callFunction.call(parent);
+			}
+			
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<mx:DateFormatter id="dateFormat" formatString="YYYY-MM-DD JJ:NN:SS" />
+	</fx:Declarations>
+	
+	<s:Group alpha="0.5" width="100%" height="100%">
+		
+		<s:Line width="100%">
+			<s:stroke>
+				<s:SolidColorStroke color="#03111f" weight="1" caps="square"/>
+			</s:stroke>
+		</s:Line>
+		<s:Line width="100%" top="1">
+			<s:stroke>
+				<s:SolidColorStroke color="#79a5d1" weight="1" caps="square"/>
+			</s:stroke>
+		</s:Line>
+		
+		<s:Rect width="100%" height="100%" top="2">
+			<s:fill>  
+				<s:LinearGradient rotation="90">  
+					<s:entries>  
+						<s:GradientEntry color="#18528a" />  
+						<s:GradientEntry color="#175088" />
+					</s:entries>  
+				</s:LinearGradient>  
+			</s:fill> 
+		</s:Rect>
+	</s:Group>
+	
+	<components:StartMenu callFunction="startBack" bottom="40" left="5" visible="{startButton.selected}" includeInLayout="{startButton.selected}" />
+	
+	<cw:StartButton id="startButton" left="10" top="1"
+					upIcon="images/start_button_up.png"
+					overIcon="images/start_button_over.png"
+					downIcon="images/start_button_over.png"
+					selectedIcon="images/start_button_over.png" />
+	
+	<s:HGroup left="70" right="150" height="40">
+		<s:Scroller width="100%" height="100%" skinClass="net.lanelife.framework.cw.skins.TaskbarScrollerSkin">
+			<container:TaskbarButtonContainer height="100%" width="100%"/>
+		</s:Scroller>
+		<container:TrayIconContainer height="100%" />
+	</s:HGroup>
+	
+	<s:Label id="datetime" color="#ffffff" text="{dateFormat.format(new Date())}" height="100%" verticalAlign="middle" right="25" />
+	
+	<s:Button width="15" height="100%" right="0" skinClass="skins.ShowDesktopButtonSkin" click="button1_clickHandler(event)" />
+	
+</s:Group>

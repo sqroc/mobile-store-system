@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"   creationComplete="init()" width="800" height="400" title="生成分析图">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	<fx:Declarations>
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="InOutDetail"   
+						 destination="inOutDetailManager" channelSet="{cs}">
+		<mx:method name="GetlistbyCategory" result="handleResult_GetlistbyCategory(event)"/> 
+		<mx:method name="GetlistbyItem" result="handleResult_GetlistbyItem(event)"/> 
+    
+		</mx:RemoteObject> 
+		<mx:RemoteObject id="StoreInOutManager"   
+						 destination="storeInOutManager" channelSet="{cs}">
+			<mx:method name="GetlistbyMoneyandDate" result="handleResult_GetlistbyMoneyandDate(event)"/>
+			<mx:method name="getStoreInOutByDate" result="handleResult_getStoreInOutByDate(event)"/>
+	    </mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import charts.balloonWithRoundedCorners;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.Image;
+			import mx.core.FlexGlobals;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			
+			import myAs.CategoryF;
+			import myAs.Util;
+			
+			import net.lanelife.framework.cw.Dialog;
+			import net.lanelife.framework.cw.Dimension;
+			import net.lanelife.framework.cw.Window;
+			
+			import windows.reportforms.reportDataWin;
+			
+			[Bindable] 
+		    public var Categories:ArrayUtil = new ArrayUtil(); 
+			
+			[Bindable] 
+			public var exceltest:Array = new Array(); 
+		   
+			[Bindable] 
+			public var excelType:String="no" ;
+			
+			[Bindable] 
+			public var chartType:String="" ;
+			
+			[Bindable] 
+			public var chart_timeType : String = "" ;
+			
+
+			
+			[Bindable]     
+			private var chart_today:Date = new Date(new Date().setHours(0,0,0,0));     
+			[Bindable]     
+			private var chart_start:Date = chart_today;     
+			[Bindable]     
+			private var chart_end:Date = null;     
+			
+			private var chart_dateRange:Object ;   
+			
+			protected function init():void
+			{
+				
+				excelType="药品销售详细报表";
+				chartType="药品分类销售比例图表";
+				chart_timeType = "本年度";
+			}
+			
+			
+			protected function initTime():void
+			{
+				chart_timeType = "本年度";
+				
+				chart_startDF.text="";
+				chart_endDF.text="";
+				this.chart_start = chart_today;     
+				this.chart_end = null; 
+				chart_dateRange = new Object();
+				
+			}
+			private function chart_onDateChangeHandler(event:Event):void     
+			{     
+				
+				chart_timeContext.selection = xuanBon;
+				
+				chart_timeType = "选择具体时间";
+		
+				if(chart_startDF.text == "")     
+				{     
+					chart_startDF.selectedDate = chart_start;     
+				}     
+				else     
+				{     
+					chart_start = chart_startDF.selectedDate;    
+					
+				}     
+				
+				if(chart_endDF.text == "")     
+				{     
+					chart_endDF.selectedDate = this.chart_end;     
+				}     
+				else     
+				{   chart_dateRange = new Object();
+					this.chart_end = chart_endDF.selectedDate;    
+					chart_dateRange["rangeEnd"] = this.chart_end;   
+					chart_startDF.selectableRange = chart_dateRange;   
+				}     
+				
+			}      
+
+			
+			
+			
+			
+			
+			//专用回调函数 ，替代 initWindow 刷新数据时留在先前页
+		
+			public function handleResult_GetlistbyMoneyandDate(event:ResultEvent):void
+			{
+				var tempList :  Array ;
+				if(event.result!=null){
+					
+					var tempChartData:ArrayCollection;
+					
+					tempChartData  = event.result as ArrayCollection ;
+					var  newchart:balloonWithRoundedCorners = balloonWithRoundedCorners (PopUpManager.createPopUp(this,balloonWithRoundedCorners,false));
+					newchart.chartData = tempChartData;
+				
+				}
+				else
+				{
+					Alert.show("数据提供异常，无法生成图表");
+					
+				}
+			}
+			
+			public function handleResult_GetlistbyItem(event:ResultEvent):void
+			{
+				
+				
+				
+				
+				var tempList :  Array ;
+				if(event.result!=null){
+					
+					var tempChartData:ArrayCollection;
+					
+					tempChartData  = event.result as ArrayCollection ;
+					var  newchart:balloonWithRoundedCorners = balloonWithRoundedCorners (PopUpManager.createPopUp(this,balloonWithRoundedCorners,false));
+					newchart.chartData = tempChartData;
+				
+				}
+				else
+				{
+					Alert.show("数据提供异常，无法生成图表");
+					
+				}
+			}
+			
+			public function handleResult_GetlistbyCategory(event:ResultEvent):void
+			{
+				var tempList :  Array ;
+				if(event.result!=null){
+					
+					var tempChartData:ArrayCollection;
+					tempChartData  = event.result as ArrayCollection ;
+					var  newchart:balloonWithRoundedCorners = balloonWithRoundedCorners (PopUpManager.createPopUp(this,balloonWithRoundedCorners,false));
+					newchart.chartData = tempChartData;
+					
+				}
+				else
+				{
+					Alert.show("数据提供异常，无法生成图表");
+					
+				}
+			}
+			
+
+			//excel
+			public function handleResult_getStoreInOutByDate(event:ResultEvent):void
+			{
+			}	
+	
+			protected function newsinglechart(event:MouseEvent):void
+			{
+			
+				var nowYear :String ="";
+				var tempdate : Date = new Date();
+				nowYear = nowYear+tempdate.fullYear;
+				if(zitemname.text=="")
+				{
+					Alert.show("请输入药品名")
+					return ;
+				}
+				InOutDetail.GetlistbyItem(nowYear,nowYear,zitemname.text,2);
+			
+			
+			}
+			protected function newchart(event:MouseEvent):void
+			{
+				var nowYear :String ="";
+				var tempdate : Date = new Date();
+				nowYear = nowYear+tempdate.fullYear;
+				
+				var nowkaitime:String  =  nowYear+"-01-01"+" "+"00:00:00";
+				var nowjietime:String =   nowYear+"-12-31"+" "+"00:00:00";
+				
+				
+				if(chart_timeType=="选择具体时间")
+				{
+					if(chart_startDF.text=="" || chart_endDF.text=="")
+					{
+						Alert.show("请选择时间");
+						return;
+					
+					}
+					
+					var kais:Array = chart_startDF.text.split("-");
+					var jies:Array = chart_endDF.text.split("-");
+					
+				    var kaitime = kais[0];
+					var jietime = jies[0];
+					
+					
+					if(chartType=="药品分类销售比例图表")
+					{
+						var ckaitime :String = chart_startDF.text+" "+"00:00:00";
+						var cjietime :String = chart_endDF.text+" "+"00:00:00";
+						InOutDetail.GetlistbyCategory(ckaitime,cjietime);
+					}
+					else if(chartType=="销售总额图表")
+					{
+						StoreInOutManager.GetlistbyMoneyandDate(kaitime,jietime,1)
+					}
+					
+						
+						
+					
+				
+					
+				}
+				else if(chart_timeType=="本年度")
+				{
+				
+					if(chartType=="药品分类销售比例图表")
+					{
+					   InOutDetail.GetlistbyCategory(nowkaitime,nowjietime);
+					}
+					else if(chartType=="销售总额图表")
+					{
+						StoreInOutManager.GetlistbyMoneyandDate(nowYear,nowYear,1)
+					}
+					else if(chartType=="单一药品销售图表")
+					{
+						if(zitemname.text=="")
+						{
+							Alert.show("请输入药品名")
+							return ;
+						}
+						
+						InOutDetail.GetlistbyItem(nowYear,nowYear,zitemname.text,2);
+						
+					}
+					else 
+					{
+						Alert.show("请选择时间");
+					
+					}
+				}
+				
+				 //InOutDetail.GetlistbyCategory("2010-05-01 00:00:00","2012-01-01 00:00:00");
+				//InOutDetail.GetlistbyItem("2011","2011","123",2);
+				//StoreInOutManager.GetlistbyMoneyandDate("2001","2012",1);
+				
+			}
+		
+			protected function newexcel(event:MouseEvent):void
+			{
+				//Util.exportToExcel(myDg);
+			}
+			private function chartContext_rb_change(evt:Event):void { 
+				var rb:RadioButton = evt.currentTarget as RadioButton; 
+			
+				chartType = rb.label;
+				
+				if(chartType!="单一药品销售图表")
+				{
+					zitemname.text="";
+				
+				}
+				
+				
+			} 
+
+		
+			private function timeContext_rb_change(evt:Event):void { 
+				var rb:RadioButton = evt.currentTarget as RadioButton; 
+		
+				chart_timeType = rb.label;
+
+				if(rb.label!="选择具体时间")
+					initTime();
+			} 
+			
+		]]>
+	</fx:Script>
+	
+
+
+	<mx:HDividedBox width="100%" height="100%" >
+		
+		<s:VGroup  height="100%" width="100%">
+			<s:HGroup width="20%" height="10%">
+				<mx:ApplicationControlBar width="100%" dock="true">
+					<mx:Label text="图表类 1" />   
+				</mx:ApplicationControlBar>  
+			</s:HGroup>
+			<!--<s:HGroup width="20%" height="10%">
+			
+					<mx:Label text="时间段选择" />   
+				</mx:ApplicationControlBar>  
+			</s:HGroup>-->
+	
+			<s:HGroup width="100%" height="10%">
+				<mx:ApplicationControlBar width="100%" dock="true">
+					<mx:RadioButtonGroup id="chart_timeContext"  />
+					<mx:Label text="时间段选择        " />   
+					<mx:RadioButton label="本年度" groupName="chart_timeContext" id="nianBon" selected="true" value ="chanian"  height="30" width="85" change="timeContext_rb_change(event)"/>
+					<mx:RadioButton label="选择具体时间" groupName="chart_timeContext"   id="xuanBon" value ="chaxuan"  height="30" width="130" change="timeContext_rb_change(event)"/>
+					<mx:Label text="开始时间：" />     
+					<mx:DateField id="chart_startDF"  showToday="true" formatString="YYYY-MM-DD"     
+								  change="chart_onDateChangeHandler(event)"/>     
+					
+					<mx:Label text=" 至 "  height="25" width="30" />    
+					<mx:Label text="结束时间："/>     
+					<mx:DateField id="chart_endDF" showToday="true" formatString="YYYY-MM-DD"     
+								  selectableRange="{{rangeStart:chart_start}}" change="chart_onDateChangeHandler(event)"/>  
+				</mx:ApplicationControlBar>  
+			</s:HGroup>
+		
+			<s:HGroup width="100%" height="10%">
+				<mx:ApplicationControlBar width="100%" dock="true">
+					<mx:RadioButtonGroup id="chartContext"  />
+					
+					<mx:RadioButton label="药品分类销售比例图表"   groupName="chartContext"   id="yaobi_c" value ="yaobi_chart" selected="true" height="30" width="150" change="chartContext_rb_change(event)"/>
+					<mx:RadioButton label="销售总额图表"   groupName="chartContext"   id="inout_c" value ="inout_chart" height="30" width="110" change="chartContext_rb_change(event)" />
+				
+					<s:Label text=""  height="30" width="60" />    
+					<s:Button label="查看分析图" id="chartBon" height="30" width="130"  click="newchart(event)"/>
+				</mx:ApplicationControlBar>  
+			</s:HGroup>
+			<s:HGroup width="20%" height="10%">
+				<mx:ApplicationControlBar width="100%" dock="true">
+					<mx:Label text="图表类 2" />   
+				</mx:ApplicationControlBar>  
+			</s:HGroup>
+			<!--<s:HGroup width="20%" height="10%">
+				<mx:ApplicationControlBar width="100%" dock="true">
+					<mx:Label text="时间段选择" />   
+				</mx:ApplicationControlBar>  
+			</s:HGroup>-->
+			<s:HGroup width="100%" height="10%">
+				<mx:ApplicationControlBar width="100%" dock="true">
+					<mx:Label text="时间段选择        " />   
+					<mx:RadioButton label="本年度"  selected="true" groupName="year"  height="30" width="85" />
+					</mx:ApplicationControlBar>
+				</s:HGroup>
+			<s:HGroup width="100%" height="10%">
+				<mx:ApplicationControlBar width="100%" dock="true">
+					
+					<mx:RadioButton label="单一药品销售图表"     id="singleinout_c"  groupName="single" selected="true" value ="singleinout_chart" height="30" width="200" change="chartContext_rb_change(event)" />
+					<s:Label text="    药品名:"  height="30" width="80" />    
+					<mx:TextInput id="zitemname" width="100" maxChars="100" />
+					<s:Label text=""  height="30" width="60" />    
+					<s:Button label="查看分析图" id="chBon" height="30" width="130"  click="newsinglechart(event)"/>
+				</mx:ApplicationControlBar>  
+				</s:HGroup>
+	
+			
+		</s:VGroup >
+		
+		
+	</mx:HDividedBox>
+	
+	
+
+</cw:DesktopWindow>

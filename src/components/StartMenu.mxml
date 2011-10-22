@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="150" height="210"
+		 creationComplete="group1_creationCompleteHandler(event)">
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			import net.lanelife.framework.cw.Dialog;
+			import net.lanelife.framework.cw.Prompt;
+			import net.lanelife.framework.cw.StartButton;
+			
+			import spark.components.Label;
+			
+			import windows.AboutWindow;
+			import windows.UpdateLogWindow;
+			
+			
+			
+			public var callFunction:Function;//回调函数
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				var win:UpdateLogWindow = new UpdateLogWindow();
+				win.taskbarButton.hide();
+				win.show();
+			}
+			
+			protected function group1_creationCompleteHandler(event:FlexEvent):void
+			{
+				this.addEventListener(MouseEvent.MOUSE_OVER,function(e:MouseEvent):void{
+					StartButton.display = true;
+				});
+				this.addEventListener(MouseEvent.MOUSE_OUT,function(e:MouseEvent):void{
+					StartButton.display = false;
+				});
+			}
+			protected function logout_clickHandler(event:MouseEvent):void
+		    {
+				callFunction.call(parent);
+		    }
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	<s:Rect left="0" right="0" bottom="0" top="0" radiusX="2" alpha="0.9">
+		<s:stroke>
+			<s:SolidColorStroke color="#666666" weight="1" caps="square" />
+		</s:stroke>
+		<s:fill>
+			<s:SolidColor color="#fcfeff"/>
+		</s:fill>
+	</s:Rect>
+	
+	<s:VGroup left="5" top="5">
+		<s:Button label="注销" width="140" height="35" skinClass="skins.StartMenuButtonSkin" click="logout_clickHandler(event)" />
+		<s:Button label="版本信息 V2.0" width="140" height="35" skinClass="skins.StartMenuButtonSkin" />
+		<s:Button label="更新日期:2011-09-30" width="140" height="35" skinClass="skins.StartMenuButtonSkin" />
+		
+	</s:VGroup>
+	
+</s:Group>

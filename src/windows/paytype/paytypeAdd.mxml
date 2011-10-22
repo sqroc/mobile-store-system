@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"  width="300" height="400" title="增加付款方式">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	
+	
+	
+	
+	<fx:Declarations>
+		
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="PayType"   
+						 destination="payTypeManager" channelSet="{cs}">
+			<mx:method name="add" result="handleResult_add(event)"/> 
+		
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			
+			import myAs.PayTypeF;
+			
+			public var callFunction:Function;//回调函数
+			
+			
+
+			
+			private function addSubmit() : void
+			{	
+				var tempPayType : PayTypeF = new PayTypeF();
+				
+				tempPayType.name = String(Cname.text);
+				
+	
+				tempPayType.bankId = String(bankId.text);
+				tempPayType.detail = String(detail.text);
+				tempPayType.memo = String(memo.text);
+				PayType.add(tempPayType);
+				PopUpManager.removePopUp(this);
+			}
+			protected function addReset()  : void
+			{
+				 Cname.text="";
+			     bankId.text=""; // 帐号ID
+			     detail.text=""; // 付款说明
+			     memo.text=""; // 备注
+			}
+			protected function handleResult_add(event:ResultEvent):void
+			{	
+				if(event.result=="succeed"){
+					
+	                Alert.show("添加成功");
+					callFunction.call(parent);
+					this.close();
+				}
+			    else
+			        Alert.show("添加失败，该分类已存在");
+				
+						  
+			}
+		
+		]]>
+	</fx:Script>
+
+	<mx:Form x="51" y="29" width="243" height="300">
+		<mx:FormHeading label="添加付款方式" width="76"/>
+		<mx:FormItem label="付款方式">
+			<mx:TextInput id="Cname" width="124"  maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="帐号ID">
+			<mx:TextInput id="bankId" width="124" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="详细">
+			<mx:TextInput id="detail" width="124" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="备注">
+			<mx:TextInput id="memo" width="124" maxChars="100" />
+		</mx:FormItem>
+	</mx:Form>
+	<s:Button  id ="addS" x="77" y="300" label="添加" click="addSubmit()"/>
+	<s:Button id ="addR" x="169" y="300" label="重填" click="addReset()"/>
+		
+
+</cw:DesktopWindow>

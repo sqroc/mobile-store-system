@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"  creationComplete="init()"  width="700" height="400" >
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="StoreInOutManager"   
+						 destination="storeInOutManager" channelSet="{cs}">
+		<mx:method name="getStoreInOutByDate" result="handleResult_getStoreInOutByDate(event)"/>
+		</mx:RemoteObject> 
+		
+		<mx:RemoteObject id="InOutDetail"   
+						 destination="inOutDetailManager" channelSet="{cs}">
+			<mx:method name="GetlistDetailbyItem" result="handleResult_GetlistDetailbyItem(event)"/> 
+		
+			
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.core.FlexGlobals;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			
+			import myAs.Util;
+			
+	
+			public var dataType :String ;
+			
+			public var startTime : String;
+			
+			public var endTime : String;
+			
+			public var singleItemName : String;
+			
+			public function init()
+			{
+				this.title=dataType+"   "+"于  "+startTime+" 至 "+endTime;
+				
+				if(dataType=="药品销售详细报表")
+				{
+				
+					
+					var column1:DataGridColumn = new DataGridColumn();
+					column1.headerText = "单据号";
+					column1.dataField = "code";
+					//column1.width=100;
+					var column2:DataGridColumn = new DataGridColumn();
+					column2.headerText = "总金额";
+					column2.dataField = "totalM";
+					//column2.width=100;
+					var column3:DataGridColumn = new DataGridColumn();
+					column3.headerText = "操作员";
+					column3.dataField = "operator";
+					//column3.width=100;
+					var column4:DataGridColumn = new DataGridColumn();
+					column4.headerText = "日期";
+					column4.dataField = "billDate";
+					//column4.width=250;
+					
+					myDg.columns = myDg.columns.concat(column1);
+					myDg.columns = myDg.columns.concat(column2);
+					myDg.columns = myDg.columns.concat(column3);
+					myDg.columns = myDg.columns.concat(column4);
+	                
+					StoreInOutManager.getStoreInOutByDate(startTime,endTime);
+				}
+				else if(dataType=="单一药品收入详细报表")
+				{
+					
+					
+					var column1:DataGridColumn = new DataGridColumn();
+					column1.headerText = "数量";
+					column1.dataField = "quantity";
+					//column1.width=100;
+					var column2:DataGridColumn = new DataGridColumn();
+					column2.headerText = "总价";
+					column2.dataField = "price";
+					//column2.width=150;
+					var column3:DataGridColumn = new DataGridColumn();
+					column3.headerText = "日期";
+					column3.dataField = "date";
+				//	column3.width=250;
+					
+					myDg.columns = myDg.columns.concat(column1);
+					myDg.columns = myDg.columns.concat(column2);
+					myDg.columns = myDg.columns.concat(column3);
+			
+					
+					
+					InOutDetail.GetlistDetailbyItem(startTime,endTime,singleItemName);
+				}
+				
+			}
+			//excel
+			public function childCallback():void
+			{
+				
+			}
+			
+			public function handleResult_GetlistDetailbyItem(event:ResultEvent):void
+			{
+				var tempList :  Array ;
+				if(event.result!=null){
+					tempList= ArrayUtil.toArray(event.result);
+					myDg.dataProvider=tempList[0];
+				}
+				else
+				{
+					Alert.show("数据提供异常，无法生成图表");
+				}
+			}
+			public function handleResult_getStoreInOutByDate(event:ResultEvent):void
+			{
+				var tempList :  Array ;
+				if(event.result!=null){
+					tempList= ArrayUtil.toArray(event.result);
+					myDg.dataProvider=tempList[0];
+				}
+				else
+				{
+					Alert.show("数据提供异常，无法生成图表");
+				}
+			}
+			public function exportTo():void
+			{
+				///调用Util类的静态方法
+				var jieguo :String ="";
+				jieguo=Util.exportToExcel(myDg);
+
+			}
+			public function back():void
+			{
+				this.close();
+			}
+			
+		]]>
+	</fx:Script>
+	<s:VGroup  height="100%" width="100%">
+	<s:HGroup width="100%" height="70%">
+	<mx:DataGrid id="myDg" width="100%" height="100%">
+	<!--	<mx:columns>
+			<mx:DataGridColumn headerText="总数" dataField="totalM"/>
+			<mx:DataGridColumn headerText="添加日期" dataField="billDate"/>
+	
+		</mx:columns>-->
+	</mx:DataGrid>
+	</s:HGroup>
+	<s:HGroup width="100%" height="10%">
+		<s:Label text="     "  height="50" width="150" />    
+	    <mx:Button id="myBtn"  label="导出 excel 表格" click="exportTo();"/>
+		<mx:Button id="backBtn"   label="返回" click="back()"/>
+		
+	</s:HGroup>
+	</s:VGroup>
+</cw:DesktopWindow>

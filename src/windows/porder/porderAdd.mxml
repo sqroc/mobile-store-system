@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"  creationComplete="init()" width="450" height="600" title="填写进货单主干">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	
+	
+	
+	
+	<fx:Declarations>
+		
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="Porder"   
+						 destination="porderManager" channelSet="{cs}">
+			<mx:method name="save" result="handleResult_save(event)"/> 
+		
+		</mx:RemoteObject> 
+		
+		<mx:RemoteObject id="PayType"   
+						 destination="payTypeManager" channelSet="{cs}">
+			<mx:method name="getNames" result="handleResult_getNames(event)"/> 
+			<mx:method name="loadByName" result="handleResult_loadByName(event)"/> 
+		</mx:RemoteObject>
+		
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			
+			import myAs.PayTypeF;
+			import myAs.PorderF;
+			public var callFunction:Function;//回调函数
+			
+			public var ptNameArray:ArrayCollection = new ArrayCollection(); 
+			public var tempPorder : PorderF = new PorderF();
+			
+			private function addSubmit() : void
+			{	
+				
+				
+				tempPorder.code = String(code.text);
+				tempPorder.operator = String(operator.text);
+				tempPorder.exeman = String(exeman.text);
+				tempPorder.amount = Number(amount.text);
+				tempPorder.memo = String(memo.text);
+				
+				tempPorder.billto = String(billto.text);
+				if(billDate.selectedDate==null)
+					tempPorder.billDate=new Date();
+				else
+				tempPorder.billDate = billDate.selectedDate;
+				
+				if(revDate.selectedDate==null)
+					tempPorder.revDate=new Date();
+				else
+				tempPorder.revDate = revDate.selectedDate;
+				
+				PayType.loadByName(ptName.text);
+				
+				
+				
+			}
+			protected function  init()
+			{
+			
+				PayType.getNames();
+			
+			}
+			
+			
+			protected function handleResult_getNames(event:ResultEvent)
+			{
+				var tempList :  Array ;
+				
+				tempList= ArrayUtil.toArray(event.result);
+				ptName.dataProvider =tempList[0];
+			
+			}
+			
+			protected function handleResult_loadByName(event:ResultEvent)
+			{
+				
+				var tempPayType:PayTypeF = PayTypeF( event.result); 
+				
+			
+				tempPorder.paytype = tempPayType;
+				Porder.save(tempPorder);
+				PopUpManager.removePopUp(this);
+				
+								
+			}
+			
+			protected function addReset()  : void
+			{
+				operator.text="";
+				exeman.text="";
+				amount.text="";
+				memo.text="";
+				billDate.selectedDate =new Date();
+				revDate.selectedDate = new Date();
+				billto.text="";
+			}
+			protected function handleResult_save(event:ResultEvent):void
+			{	
+				if(event.result=="succeed"){
+					
+	                Alert.show("添加进货单成功，可以在主菜单中添加明细");
+					
+					callFunction.call(parent);
+					this.close();
+				}
+			    else
+			        Alert.show("添加失败");
+				
+						  
+			}
+		
+		]]>
+	</fx:Script>
+
+	<mx:Form x="51" y="29" width="350" height="500">
+		<mx:FormHeading label="填写进货单主干" width="76"/>
+		<mx:FormItem label="单据编号">
+			<mx:TextInput id="code" width="124" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="操作员">
+			<mx:TextInput id="operator" width="124" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="经办人">
+			<mx:TextInput id="exeman" width="124" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="付款方式">
+			<mx:ComboBox id="ptName" dataProvider="{ptNameArray}"   width="200"  />
+		</mx:FormItem>
+		<mx:FormItem label="总金额">
+			<mx:TextInput id="amount" width="124" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="交货地址">
+			<mx:TextInput id="billto" width="124" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="备注">
+			<mx:TextInput id="memo" width="124" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="交货日期">
+			<mx:DateField id="revDate" formatString="YYYY-MM-DD" width="160" />
+		</mx:FormItem>
+		<mx:FormItem label="单据日期">
+			<mx:DateField id="billDate" formatString="YYYY-MM-DD" width="160"/>
+		</mx:FormItem>
+		
+	
+	</mx:Form>
+	
+	<s:Button  id ="addS" x="83" y="400" label="添加" click="addSubmit()"/>
+	<s:Button id ="addR" x="190" y="400" label="重填" click="addReset()"/>
+	
+
+	
+</cw:DesktopWindow>

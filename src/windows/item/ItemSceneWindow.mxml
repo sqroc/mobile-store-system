@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"   creationComplete="initWindow()" width="800" height="400" title="药品管理">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	<fx:Declarations>
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="Item"   
+						 destination="itemManager" channelSet="{cs}">
+			<mx:method name="getItems" result="handleResult_getItems(event)"/> 
+			<mx:method name="deleletByid" result="handleResult_deleletByid(event)"/> 
+			<mx:method name="getTotalNum" result="handleResult_getTotalNum(event)"/> 
+			
+		</mx:RemoteObject> 
+		<mx:RemoteObject id="ItemProvider"   
+						 destination="itemProviderManager" channelSet="{cs}">
+			<mx:method name="loadbyItemid" result="handleResult_loadbyItemid(event)"/> 
+			
+			
+		</mx:RemoteObject> 
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.controls.Image;
+			import mx.core.FlexGlobals;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			
+			import myAs.ItemF;
+			import myAs.CategoryF;
+			import myAs.ItemProviderF;
+			import net.lanelife.framework.cw.Dialog;
+			import net.lanelife.framework.cw.Dimension;
+			import net.lanelife.framework.cw.Window;
+	
+			import mx.core.UITextField; 
+			import mx.controls.TextInput;
+			
+		    import windows.itemp.*;
+			
+			[Bindable] 
+		    public var Items:ArrayUtil = new ArrayUtil(); 
+			
+			[Bindable]
+            private var pageNumber : int = 1;
+			
+			[Bindable]
+			private var pageLimit : int = 6;
+			
+			[Bindable]
+			private var TotalNum : int = -1;
+			
+			[Bindable]
+			private var TotalPageNum : int = -1;
+			//专用回调函数 ，替代 initWindow 刷新数据时留在先前页
+			
+			[Bindable] 
+			public var SitemProvider:ItemProviderF;
+			
+			[Bindable]
+			public var  searchCode: int = 0;
+			[Bindable]
+			public var  searchValue: String = "";
+			
+			public function childCallback():void
+			{
+				Item.getTotalNum(searchValue,searchCode);	
+				Item.getItems(searchValue,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+			}
+			private function makeTotalPageNum():void
+			{
+				if(TotalNum % pageLimit ==0)
+				{
+					TotalPageNum = TotalNum/pageLimit;
+				}
+				else 
+					TotalPageNum = TotalNum/pageLimit + 1;
+			}
+			
+			
+			protected function initWindow():void
+			{
+				Item.getTotalNum(searchValue,searchCode);
+				Item.getItems(searchValue,0,pageLimit,searchCode);
+				
+			}
+	
+			public function handleResult_loadbyItemid(event:ResultEvent):void
+			{
+				
+				SitemProvider = ItemProviderF(event.result);
+			    var iid : int =	itemList.selectedItem.item_id;
+				Item.deleletByid(iid,SitemProvider.ipid);
+				
+            }	
+			public function handleResult_deleletByid(event:ResultEvent):void
+			{
+				var flag : int = int(event.result);
+			
+				if(flag==1){
+					childCallback();
+					Item.getItems(searchValue,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+				}else{
+					Alert.show("删除错误,请删除该商品对应的订单");
+				}
+				
+			}
+			public function handleResult_getTotalNum(event:ResultEvent):void
+			{
+				TotalNum  = int(event.result);
+				makeTotalPageNum();
+			}
+			
+			public function handleResult_getItems(event:ResultEvent):void
+			{
+				 
+				var tempList :  Array ;
+				if(event.result!=null){
+					tempList= ArrayUtil.toArray(event.result);
+					itemList.dataProvider=tempList[0];
+				}else{
+					Alert.show("没有找到相关任务信息");
+				}
+
+			}	
+			
+			public function	deleteItems(event:MouseEvent):void
+			{
+				var iid : int =	itemList.selectedItem.item_id;
+				ItemProvider.loadbyItemid(iid);
+			}
+
+			public function detailItems(event:MouseEvent):void
+		    {
+			   var iid : int =	itemList.selectedItem.item_id;
+			   var ipWin:IpSceneWindow  = IpSceneWindow(PopUpManager.createPopUp(this,IpSceneWindow,false));
+			   ipWin.resizable = false;
+			   ipWin.maximizable = false;
+			   ipWin.itemId_ip = iid;
+			   PopUpManager.centerPopUp(ipWin);
+			   
+		 }
+			public function	searchByname(event:MouseEvent):void
+			{
+				searchCode=1;
+				searchValue=String(bynameV.text);
+				Item.getTotalNum(searchValue,searchCode);	
+				Item.getItems(searchValue,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+			}
+			
+			public function	showAll(event:MouseEvent):void
+			{
+				searchCode=0;
+				searchValue="";
+				Item.getTotalNum(searchValue,searchCode);	
+				Item.getItems(searchValue,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+			}
+			
+			public function	searchBynum(event:MouseEvent):void
+			{
+				searchCode=2;
+				searchValue=bynum.text;
+				Item.getTotalNum(searchValue,searchCode);	
+				Item.getItems(searchValue,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+			}
+			
+			
+			public function showAddItems(event:MouseEvent):void
+			{
+				
+			
+				var itemWin:itemAdd  = itemAdd(PopUpManager.createPopUp(this,itemAdd,false));
+				itemWin.resizable = false;
+				itemWin.maximizable = false;
+				itemWin.callFunction = this.childCallback; // 子窗体中可以调用的父窗体函数（这里是子窗体关闭时，用来刷新父窗体的内容 
+				PopUpManager.centerPopUp(itemWin);
+				
+			}
+			
+			protected function showUpdateItems(event:MouseEvent):void
+			{
+				
+				
+				var tempItem : ItemF = new ItemF();
+				
+				tempItem.item_id = itemList.selectedItem.item_id;
+				tempItem.item_name = itemList.selectedItem.item_name;
+				tempItem.standard = itemList.selectedItem.standard;
+				tempItem.categoryName = 	itemList.selectedItem.categoryName;
+				tempItem.product_num = itemList.selectedItem.product_num;
+				tempItem.store_num =itemList.selectedItem.store_num;
+				tempItem.intro = itemList.selectedItem.intro;
+				tempItem.e_item_name =itemList.selectedItem.e_item_name;		
+				tempItem.img_url = 	itemList.selectedItem.img_url;
+				
+                tempItem.cost = itemList.selectedItem.cost;
+				tempItem.price = itemList.selectedItem.price;
+				tempItem.providerName = itemList.selectedItem.providerName;
+	
+				
+				var itemWin:itemUpdate  = itemUpdate(PopUpManager.createPopUp(this,itemUpdate,false));
+				itemWin.resizable = false;
+				itemWin.maximizable = false;
+				itemWin.tempData = tempItem;
+				itemWin.callFunctionUpdate = this.childCallback; // 子窗体中可以调用的父窗体函数（这里是子窗体关闭时，用来刷新父窗体的内容 
+				PopUpManager.centerPopUp(itemWin);
+			
+			}
+			
+			//上一页
+			private function prePage():void{
+				if(pageNumber > 1){
+					pageNumber -= 1;
+					Item.getItems(searchValue,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+					
+				}
+			}
+			//下一页
+			private function nextPage():void{
+				if(pageNumber < this.pageChoice.maximum){
+					pageNumber += 1;
+					Item.getItems(searchValue,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+			
+				}
+			}
+			//跳转至
+			private function jumpPage():void{
+			
+				Item.getItems(searchValue,(pageChoice.value-1)*pageLimit,pageLimit,searchCode);
+			}
+//			private function changeLimite():void{
+//				
+//				pageLimit = Limite.value;
+//				makeTotalPageNum();
+//				Item.getItems(searchValue,(pageChoice.value-1)*pageLimit,pageLimit,searchCode);
+//			}
+
+			
+//			private function initTextInput(evt:Event):void { 
+//				var ti:TextInput = evt.currentTarget as TextInput; 
+//				var tf:UITextField = ti.mx_internal::getTextField(); 
+//				tf.alwaysShowSelection = true; 
+//			} 
+
+		]]>
+	</fx:Script>
+	
+
+
+	<mx:HDividedBox width="100%" height="100%" >
+		
+		<s:VGroup  height="100%" width="100%">
+			<s:HGroup width="90%" height="10%">
+				<s:Label text="当前药品：" height="30" verticalAlign="middle" textAlign="center"/>
+				<s:Label id="curadminName" width="229" verticalAlign="middle" textAlign="center" height="30" text="药品名：  {itemList.selectedItem.item_name}"/>
+				<s:Button label="删除" id="deleteItemBon" height="30" width="85"  click="deleteItems(event)"/>
+				<s:Button label="添加" id="addItemBon" width="85" height="30"  click="showAddItems(event)"/>
+				<s:Button label="修改" id="updateItemBon" width="85" height="30" click="showUpdateItems(event)"/>
+			</s:HGroup>
+			<s:HGroup width="90%" height="10%">
+				<mx:ApplicationControlBar width="790" dock="true">
+				<mx:TextInput id="bynameV" width="200" maxChars="100" text="请输入药品名" height="25" selectionBeginIndex="0"/>
+				<s:Button label="搜索" id="searchproBon" width="85" height="25" click="searchByname(event)"/>
+			
+				<s:Label text="库存小于：" height="30" verticalAlign="middle" textAlign="center"/>
+				<mx:TextInput id="bynum" width="200" maxChars="100" restrict="0-9" height="25"/>
+				<s:Button label="搜索" id="searchnumBon" width="85" height="25" click="searchBynum(event)"/>
+				<s:Button label="显示全部" id="showallBon" width="85" height="25" click="showAll(event)"/>
+				</mx:ApplicationControlBar>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" height="50%">
+				
+				
+				<mx:AdvancedDataGrid  id="itemList" dataProvider="{Items}" designViewDataType="flat" width="100%" height="100%">
+					<mx:columns>
+						<mx:AdvancedDataGridColumn  width="40"  headerText="Id" dataField="item_id"/>
+						<mx:AdvancedDataGridColumn  width="100" headerText="中文名" dataField="item_name" />
+					
+						<mx:AdvancedDataGridColumn  width="100" headerText="规格" dataField="standard" />
+						<mx:AdvancedDataGridColumn  width="100"  headerText="批号" dataField="product_num" />
+						<mx:AdvancedDataGridColumn  width="100"  headerText="库存" dataField="store_num" />
+						
+						
+					</mx:columns>
+				</mx:AdvancedDataGrid>
+			</s:HGroup>
+			
+			<s:HGroup width="90%" height="10%" verticalAlign="bottom" >
+				<mx:ApplicationControlBar width="790" dock="true">
+					<s:Label width="300" text=""/>	
+				<s:Button id="preBon" label="上一页" click="prePage()"/>
+				<s:Button id="nextBon" label="下一页" click="nextPage()"/>
+				<s:Button id="jumpBon" label="跳转至" click="jumpPage()" />
+				<s:NumericStepper id="pageChoice" minimum="1" maximum="{TotalPageNum}" value="{pageNumber}" width="50" height="21" y="7"/>
+				<s:Label  verticalAlign="middle" text="页" width="33" height="22" y="6"  textAlign="center"/>
+				
+                <s:Label textAlign="center" verticalAlign="middle" text="  共{TotalPageNum}页      {TotalNum}条记录" width="160" height="22" y="6"/>
+				</mx:ApplicationControlBar>
+			</s:HGroup>
+			<!--
+			<s:HGroup width="90%" height="10%" verticalAlign="bottom" >
+				<s:NumericStepper id="Limite" minimum="4"  maximum="10" value="{pageLimit}" width="50" height="21" y="7"/>
+				<s:Label  verticalAlign="middle" text="条每页" width="50" height="22" y="6"  textAlign="center"/>
+				<s:Button id="LimiteBon" label="更改" click="changeLimite()" />
+				
+			</s:HGroup>-->
+		</s:VGroup >
+		
+		
+	</mx:HDividedBox>
+	
+	
+<!--	+"页"+" "+"{TotalNum}"+" 条记录"-->
+</cw:DesktopWindow>

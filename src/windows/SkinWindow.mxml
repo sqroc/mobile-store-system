@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx" 
+		   xmlns:cw="net.lanelife.framework.cw.*" 
+		   width="400" height="300" x="250" y="70"
+		   title="窗口外观演示">
+	<fx:Script>
+		<![CDATA[
+			import mx.events.ColorPickerEvent;
+			
+			import net.lanelife.framework.cw.Window;
+			
+			protected function colorpicker1_changeHandler(event:ColorPickerEvent):void
+			{
+				this.chromeColor = event.color;
+			}
+			
+			protected function colorpicker2_changeHandler(event:ColorPickerEvent):void
+			{
+				Window.CHROME_COLOR = event.color;
+			}
+			
+			[Embed(source="images/window.png")]
+			public var bg:Class;
+			
+			protected function image1_clickHandler(event:MouseEvent):void
+			{
+				this.backgroundBitmap = bg;
+			}
+			
+			protected function image2_clickHandler(event:MouseEvent):void
+			{
+				Window.BACKGROUND_BITMAP = bg;
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:VGroup left="10" top="10" gap="10">
+		<s:HGroup>
+			<s:Label text="当前窗口颜色" height="24" verticalAlign="middle" />
+			<mx:ColorPicker change="colorpicker1_changeHandler(event)" />
+		</s:HGroup>
+		<s:HGroup>
+			<s:Label text="全局窗口颜色" height="24" verticalAlign="middle" />
+			<mx:ColorPicker change="colorpicker2_changeHandler(event)" />
+		</s:HGroup>
+		<s:HGroup>
+			<s:Label text="当前窗口背景图" height="24" verticalAlign="middle" />
+			<s:Image width="20" height="20" source="{bg}" click="image1_clickHandler(event)"/>
+		</s:HGroup>
+		<s:HGroup>
+			<s:Label text="全局窗口背景图" height="24" verticalAlign="middle" />
+			<s:Image width="20" height="20" source="{bg}" click="image2_clickHandler(event)"/>
+		</s:HGroup>
+	</s:VGroup>
+	
+	<s:Label text="本示例只为了演示窗口整体主要颜色和背景的更换&#xd;您可以通过自定义窗口外观文件得到更具特色风格的窗口。" bottom="20" left="10" />
+</cw:DesktopWindow>

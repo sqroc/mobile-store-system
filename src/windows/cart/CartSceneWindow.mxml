@@ -1,0 +1,785 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"   creationComplete="initWindow()" width="800" height="450" title="订单管理">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	<fx:Declarations>
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="Cart"   
+						 destination="cartManager" channelSet="{cs}">
+			<mx:method name="getCarts" result="handleResult_getCarts(event)"/> 
+			<mx:method name="deleletByid" result="handleResult_deleletByid(event)"/> 
+			<mx:method name="getTotalNum" result="handleResult_getTotalNum(event)"/> 
+			<mx:method name="modify" result="handleResult_modify(event)"/> 
+		</mx:RemoteObject> 
+		
+		
+		<mx:RemoteObject id="Cartinfo"   
+						 destination="cartinfoManager" channelSet="{cs}">
+	         <mx:method name="deleletByUid" result="handleResult_CartinfodeleletByid(event)"/> 
+		</mx:RemoteObject> 
+		
+		
+		<mx:RemoteObject id="OrderItemT"   
+						 destination="orderItemManager" channelSet="{cs}">
+			
+			<mx:method name="deleletByCard_id" result="handleResult_OrderItemgetTotalNum(event)"/> 
+			
+		</mx:RemoteObject> 
+		<mx:HTTPService id="httpservice" />
+		
+		
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import flash.events.*;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DateField;
+			import mx.controls.Image;
+			import mx.core.Application;
+			import mx.core.FlexGlobals;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			import mx.utils.URLUtil;
+			
+			import myAs.CartF;
+			import myAs.OrderItemF;
+			
+			import net.lanelife.framework.cw.Dialog;
+			import net.lanelife.framework.cw.Dimension;
+			import net.lanelife.framework.cw.Window;
+			
+			public var tempcid:String ="";
+			
+			[Bindable] 
+			public var mainCart:CartF = new CartF(); 
+			
+			[Bindable] 
+		    public var Carts:ArrayUtil = new ArrayUtil(); 
+			
+			[Bindable]
+            private var pageNumber : int = 1;
+			
+			[Bindable]
+			private var pageLimit : int = 6;
+			
+			[Bindable]
+			private var TotalNum : int = -1;
+			
+			[Bindable]
+			private var TotalPageNum : int = -1;
+			
+			
+			[Bindable]
+			public var  searchCode: int = 0;
+			[Bindable]
+			public var  searchValue: String = "";
+			
+			[Bindable]
+			public var  searchDate1: String = "";
+			
+			[Bindable]
+			public var  searchDate2: String = "";
+			
+			[Bindable]
+			public var statelist:ArrayCollection = new ArrayCollection(
+				[ 
+					{label:"请选择状态",data:1},
+					{label:"未付款",data:2}, 
+				  {label:"已付款，未发货",data:3}, 
+				  {label:"配货中",data:4}, 
+				  {label:"已发货",data:5}, 
+				  {label:"确认收货",data:6}, 
+				  {label:"已撤销",data:7}
+				
+				]);
+			; 
+			[Bindable]
+			public var  optionArray: Array = ["one", "two", "three"];
+			
+			[Bindable]
+			public var starthour:ArrayCollection = new ArrayCollection();
+			[Bindable]
+			public var endhour:ArrayCollection = new ArrayCollection();
+			
+			[Bindable]     
+			private var today:Date = new Date(new Date().setHours(0,0,0,0));     
+			[Bindable]     
+			private var start:Date = today;     
+			[Bindable]     
+			private var end:Date = null;     
+
+			private var dateRange:Object ;   
+			
+			
+			
+			protected function initWindow():void
+			{
+				var hour : String = "" 
+				for(var i : int =0;i<=9;i++ )
+				{
+					hour = "0"+i;
+					starthour.addItem(hour);
+					endhour.addItem(hour);
+				}
+				
+				for(var i : int =11;i<=23;i++ )
+				{
+					hour = ""+i;
+					starthour.addItem(hour);
+					endhour.addItem(hour);
+				}
+				searchCode=0;
+				
+				optionArray[0]="";
+				optionArray[1]="";
+				optionArray[2]="";
+				Cart.getTotalNum(optionArray,searchCode);
+				Cart.getCarts(optionArray,0,pageLimit,searchCode);
+			}
+			
+			
+			
+			
+			
+			
+			
+			
+			//日期改变函数
+			private function onDateChangeHandler(event:Event):void     
+			{     
+				if(startDF.text == "")     
+				{     
+					startDF.selectedDate = start;     
+				}     
+				else     
+				{     
+					start = startDF.selectedDate;    
+					//endDF.selectedDate = start;                
+				}     
+				
+				if(endDF.text == "")     
+				{     
+					endDF.selectedDate = this.end;     
+				}     
+				else     
+				{   dateRange = new Object();
+					this.end = endDF.selectedDate;    
+					dateRange["rangeEnd"] = this.end;   
+					startDF.selectableRange = dateRange;   
+				}     
+				
+			}      
+
+			
+			//专用回调函数 ，替代 initWindow 刷新数据时留在先前页
+			public function childCallback():void
+			{
+				Cart.getTotalNum(optionArray,searchCode);	
+				Cart.getCarts(optionArray,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+			}
+			
+			public function addPeiCallback():void
+			{
+				
+				var tempCart : CartF = new CartF();
+				tempCart.cart_id = cartList.selectedItem.cart_id;
+				tempCart.state = "配货中";
+				tempCart.allprice = cartList.selectedItem.allprice;
+				tempCart.date = cartList.selectedItem.date;
+				tempCart.userId =cartList.selectedItem.userId;
+				tempCart.num = cartList.selectedItem.num;
+				tempCart.user = cartList.selectedItem.user;
+				Cart.modify(tempCart);
+				
+				Alert.show("打印配货单吗",
+					"",
+					Alert.YES|Alert.NO,
+					null,
+					printPei);
+				                    
+			}
+			
+			
+			
+			private function makeTotalPageNum():void
+			{
+				if(TotalNum % pageLimit ==0)
+				{
+					TotalPageNum = TotalNum/pageLimit;
+				}
+				else 
+					TotalPageNum = TotalNum/pageLimit + 1;
+			}
+			
+			protected function handleResult_modify(event:ResultEvent):void
+			{
+				if(event.result=="succeed")
+				{
+					Alert.show("操作成功");
+					childCallback();
+					
+				}
+				else
+					Alert.show("操作失败");
+			}
+			
+			protected function handleResult_deleletByid(event:ResultEvent):void
+			{
+				var flag : int = int(event.result);
+				
+				if(flag==1){
+					Alert.show("操作成功");
+					childCallback();
+				}
+				else
+					Alert.show("操作失败");
+			
+			}
+	
+			
+			protected function handleResult_CartinfodeleletByid(event:ResultEvent):void
+			{
+				
+				var flag : int = int(event.result);
+				
+				if(flag==1){
+					var  cartid:int = cartList.selectedItem.cart_id;
+					Cart.deleletByid(cartid);
+					
+				}else{
+					Alert.show("删除错误2");
+				}
+			}
+			
+			protected function handleResult_OrderItemgetTotalNum(event:ResultEvent):void
+			{
+				
+				
+				var flag : int = int(event.result);
+				
+				if(flag==1){
+					
+					var  uid:int = cartList.selectedItem.user.uid;
+					
+					Cartinfo.deleletByUid(uid);
+				}else{
+					Alert.show("删除错误1");
+				}
+				
+			}
+			
+			public function handleResult_getTotalNum(event:ResultEvent):void
+			{
+				TotalNum  = int(event.result);
+				makeTotalPageNum();
+				
+				
+			}
+			
+			public function handleResult_getCarts(event:ResultEvent):void
+			{
+				
+				var tempList :  Array ;
+				if(event.result!=null){
+					tempList= ArrayUtil.toArray(event.result);
+					cartList.dataProvider=tempList[0];
+				}else{
+					Alert.show("没有找到相关任务信息");
+				}
+				
+			}	
+			
+			public function detailCarts(event:MouseEvent):void
+			{
+				var cartId:int = cartList.selectedItem.cart_id;
+				var orderWin:OrderItem  = OrderItem(PopUpManager.createPopUp(this,OrderItem,false));
+				orderWin.resizable = false;
+				orderWin.maximizable = false;
+				orderWin.cartId = cartId; // 子窗体中可以调用的父窗体函数（这里是子窗体关闭时，用来刷新父窗体的内容 
+				PopUpManager.centerPopUp(orderWin);
+				
+			}
+			
+			
+			//删除
+			public function	deleteCarts(event:MouseEvent):void
+			{
+				var cartId:int = cartList.selectedItem.cart_id;
+				OrderItemT.deleletByCard_id(cartId);
+				
+				
+			}
+			
+			//搜索操作
+			public function	searchBynum(event:MouseEvent):void
+			{
+				if(bynumV.text=="")
+				{
+					Alert.show("请输入订单号!");
+					return ;
+				}
+				startDF.text="";
+				endDF.text="";
+				sh.text="00";
+				eh.text="00";
+				this.start = today;     
+			    this.end = null;     
+				
+			    dateRange = new Object();
+				
+				bystateV.text="请选择状态";
+				
+				optionArray[0]=String(bynumV.text);
+				optionArray[1]="";
+				optionArray[2]="";
+				
+				searchCode=1;
+				Cart.getTotalNum(optionArray,searchCode);	
+				Cart.getCarts(optionArray,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+			}
+			
+			public function	showAll(event:MouseEvent):void
+			{
+				startDF.text="";
+				endDF.text="";
+				this.start = today;     
+				this.end = null; 
+				dateRange = new Object();
+			
+				sh.text="00";
+				eh.text="00";
+				searchCode=0;//
+				bystateV.text="请选择状态";
+				bynumV.text="请输入订单号状态";
+				searchCode=0;
+				
+				optionArray[0]=""
+				optionArray[1]="";
+				optionArray[2]="";
+				
+				Cart.getTotalNum(optionArray,searchCode);	
+				Cart.getCarts(optionArray,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+			}
+			
+			public function	searchBystate(event:MouseEvent):void
+			{
+				
+				if(bystateV.text=="请选择状态")
+				{
+					Alert.show("请选择状态!");
+					return ;
+				}
+				
+				else if(startDF.text=="" || endDF.text=="" )
+				{
+					searchCode=2;
+					optionArray[0]=String(bystateV.text);
+				}
+				
+				else
+				{
+					//有问题
+					
+					searchCode=4;
+					optionArray[0]=String(bystateV.text);
+					searchDate1=startDF.text+" "+sh.text+":"+"00"+":"+"00";
+				    searchDate2=endDF.text+" "+eh.text+":"+"00"+":"+"00";
+					optionArray[0]=String(bystateV.text);
+					optionArray[1]=searchDate1;
+					optionArray[2]=searchDate2;
+					
+				}
+				
+			
+				Cart.getTotalNum(optionArray,searchCode);	
+				Cart.getCarts(optionArray,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+				/////
+			}
+		
+			public function	cancelsaixuan(event:MouseEvent):void
+			{
+				startDF.text="";
+				endDF.text="";
+				sh.text="00";
+				eh.text="00";
+				
+				this.start = today;     
+				this.end = null; 
+				dateRange = new Object();
+				
+				optionArray[1]="";
+				optionArray[2]="";
+				
+				
+				
+				if(searchCode==3)
+				{
+					startDF.text="";
+					endDF.text="";
+					this.start = today;     
+					this.end = null; 
+					dateRange = new Object();
+				
+					sh.text="00";
+					eh.text="00";
+					searchCode=0;//
+					optionArray[0]=""
+					optionArray[1]="";
+					optionArray[2]="";
+					
+					Cart.getTotalNum(optionArray,searchCode);	
+					Cart.getCarts(optionArray,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+				   
+				
+				}
+				if(searchCode==4)
+				{
+				
+					startDF.text="";
+					endDF.text="";
+					this.start = today;     
+					this.end = null; 
+					dateRange = new Object();
+					
+					sh.text="00";
+					eh.text="00";
+					optionArray[1]="";
+					optionArray[2]="";
+					optionArray[0]=String(bystateV.text);
+					searchCode=2;
+					Cart.getTotalNum(optionArray,searchCode);	
+					Cart.getCarts(optionArray,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+					
+				
+				}
+				
+				
+				
+				
+			}
+		
+			
+			public function  saixuanbytime(event:MouseEvent):void
+			{
+				
+				if(startDF.text=="" || endDF.text=="" )
+				{
+					Alert.show("请输入时间");
+				}
+					
+				else
+				{
+					if(searchCode==0)
+					{
+						
+						searchCode=3;
+					
+						searchDate1=startDF.text+" "+sh.text+":"+"00"+":"+"00";
+						searchDate2=endDF.text+" "+eh.text+":"+"00"+":"+"00";
+						
+						optionArray[1]=searchDate1;
+						optionArray[2]=searchDate2;
+					
+					
+						Cart.getTotalNum(optionArray,searchCode);	
+						Cart.getCarts(optionArray,(pageNumber-1)*pageLimit,pageLimit,searchCode);	
+						return;
+					
+					}
+					else if(searchCode==1)
+					{
+						Alert.show("订单号查询不支持时间筛选");
+						return;
+					}
+					
+					else if(searchCode==2){
+				
+						
+					searchDate1=startDF.text+" "+sh.text+":"+"00"+":"+"00";
+					searchDate2=endDF.text+" "+eh.text+":"+"00"+":"+"00";
+					optionArray[0]=String(bystateV.text);
+					optionArray[1]=searchDate1;
+					optionArray[2]=searchDate2;
+					
+					searchCode==4;
+					Cart.getTotalNum(optionArray,searchCode);	
+					Cart.getCarts(optionArray,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+					
+					searchCode==2;
+					return;
+					}
+					
+					else if(searchCode==4)
+					{
+						
+						//searchCode=3;
+						searchDate1=startDF.text+" "+sh.text+":"+"00"+":"+"00";
+						searchDate2=endDF.text+" "+eh.text+":"+"00"+":"+"00";
+						optionArray[1]=searchDate1;
+						optionArray[2]=searchDate2;
+						Cart.getTotalNum(optionArray,searchCode);	
+						Cart.getCarts(optionArray,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+						return;
+					}
+					else if(searchCode==3)
+					{
+						
+						searchDate1=startDF.text+" "+sh.text+":"+"00"+":"+"00";
+						searchDate2=endDF.text+" "+eh.text+":"+"00"+":"+"00";
+						optionArray[1]=searchDate1;
+						optionArray[2]=searchDate2;
+						Cart.getTotalNum(optionArray,searchCode);	
+						Cart.getCarts(optionArray,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+						return;
+					
+					
+					}
+				}
+				
+				
+				
+			}
+			
+			protected function readyCarts(event:MouseEvent):void
+			{
+				tempcid =  cartList.selectedItem.num;
+				var tempState :String = cartList.selectedItem.state;
+				if(tempState=="已付款，未发货")
+				{
+					Alert.show("确定配货吗",
+						"",
+						Alert.YES|Alert.NO,
+						null,
+						Addpei);
+				}
+				else if(tempState!="配货中" && tempState!="已发货")
+					Alert.show("该用户还没有付款，不能进行配货");
+			
+			}
+			
+			protected function readywords():void
+			{
+				if(tempcid=="")
+				 tempcid = cartList.selectedItem.num;
+				
+				 var tempStr:String =Application.application.url;
+				 var serverName:String =URLUtil.getServerName(tempStr);
+				 var serverPort:String=URLUtil.getPort(tempStr).toString();
+				 var serverProtocol:String=URLUtil.getProtocol(tempStr);
+				 var uString:String = serverProtocol + "://" + serverName + ":" +serverPort+"/"+"mobile-store-system/";
+				
+				 var type:String ="linghuo";
+				 var id : String =tempcid;
+				
+				 var docname = "linghuo"+" "+tempcid;
+				 
+				 var url : String =uString+"PrintWord?type="+type+"&id="+id+"&pfileName="+docname;
+				 
+				 var urlRequest:URLRequest = new URLRequest(url);
+				 navigateToURL(urlRequest, "_top");
+				 
+				 
+				 
+			}
+			private function printPei(E: CloseEvent): void{
+				
+				
+				if (E.detail == Alert.YES){
+					
+					Alert.show("测试打印word");
+					readywords();
+				}
+			}	
+			
+			private function Addpei(E: CloseEvent): void{
+				
+				
+				if (E.detail == Alert.YES){
+					
+					
+					var addPeiWin:addPeiWindow  = addPeiWindow(PopUpManager.createPopUp(this,addPeiWindow,false));
+					addPeiWin.code_id = cartList.selectedItem.num;
+					
+					addPeiWin.resizable = false;
+					addPeiWin.maximizable = false;
+					addPeiWin.callFunction = this.addPeiCallback; // 子窗体中可以调用的父窗体函数（这里是子窗体关闭时，用来刷新父窗体的内容 
+					PopUpManager.centerPopUp(addPeiWin);
+			   }
+			}
+			
+			
+			
+			
+			
+			protected function sendCarts(event:MouseEvent):void
+			{
+				
+				var tempState :String = cartList.selectedItem.state;
+				
+				if(tempState=="配货中")
+				{
+				   Alert.show("确定发货吗",
+					"",
+					Alert.YES|Alert.NO,
+					null,
+					send);
+			    }
+				else if(tempState!="已发货")
+					Alert.show("尚未配货，不能发货");
+				
+				
+			}
+			
+			private function send(E: CloseEvent): void{
+			
+				
+				if (E.detail == Alert.YES){
+				var tempCart : CartF = new CartF();
+				tempCart.cart_id = cartList.selectedItem.cart_id;
+				tempCart.state = "已发货";
+				tempCart.allprice = cartList.selectedItem.allprice;
+				tempCart.date = cartList.selectedItem.date;
+				tempCart.userId =cartList.selectedItem.userId;
+				tempCart.num = cartList.selectedItem.num;
+				
+				
+				tempCart.user = cartList.selectedItem.user;
+				
+				
+				Cart.modify(tempCart);
+				}
+			}
+			
+			
+			
+			
+			//翻页操作
+			//上一页
+			private function prePage():void{
+				if(pageNumber > 1){
+					pageNumber -= 1;
+					Cart.getCarts(optionArray,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+					
+				}
+			}
+			//下一页
+			private function nextPage():void{
+				if(pageNumber < this.pageChoice.maximum){
+					pageNumber += 1;
+					Cart.getCarts(optionArray,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+			
+				}
+			}
+			//跳转至
+			private function jumpPage():void{
+			
+				Cart.getCarts(optionArray,(pageChoice.value-1)*pageLimit,pageLimit,searchCode);
+			}
+
+
+		]]>
+	</fx:Script>
+	
+	
+	<mx:HDividedBox width="100%" height="100%" >
+		
+		<s:VGroup  height="100%" width="100%">
+			<s:HGroup width="90%" height="8%">
+				
+				<s:Label text="当前订单：" height="30" verticalAlign="middle" textAlign="center"/>
+				<s:Label id="curadminName" width="229" verticalAlign="middle" textAlign="center" height="30" text=" 订单状态   ：{cartList.selectedItem.state}"/>
+				<s:Button label="详情" id="detailAdminBonF" height="30" width="85"  click="detailCarts(event)"/>
+				<!--<s:Button label="删除当前" id="deleBonF" height="30" width="95"  click="deleteCarts(event)"/>-->
+				<s:Button label="发货" id="fBon" width="85" height="30"  click="sendCarts(event)"/>
+				<s:Button label="配货" id="pBon" width="85" height="30"  click="readyCarts(event)"/>
+				<s:Button label="打印配货单" id="wordtest" width="100" height="30"  click="readywords()"/>
+			
+			</s:HGroup>
+			
+			
+			<s:HGroup width="90%" height="10%">
+				<mx:TextInput id="bynumV" width="200" maxChars="100" text="输入订单号" height="25"/>
+				<s:Button label="搜索" id="searchnumBon" width="85" height="25" click="searchBynum(event)"/>
+				
+				<s:Label text="订单状态：" height="30" verticalAlign="middle" textAlign="center"/>
+				<mx:ComboBox id="bystateV" dataProvider="{statelist}" width="150"  height="25" color="0x000000"/>
+			
+				<s:Button label="搜索" id="searchstateBon" width="85" height="25" click="searchBystate(event)"/>
+				<s:Button label="显示全部" id="showallBon" width="85" height="25" click="showAll(event)"/>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" height="10%">
+			
+				
+				<mx:ApplicationControlBar width="790" dock="true">
+					<s:Button label="时间筛选" id="saixuanbon" height="25" width="80"  click="saixuanbytime(event)"/>
+					<s:Button label="取消筛选" id="cancelsaixuanbon" height="25" width="80"  click="cancelsaixuan(event)"/>    
+					<mx:Label text="开始日期：" />     
+					<mx:DateField id="startDF"  showToday="true" formatString="YYYY-MM-DD"     
+								  change="onDateChangeHandler(event)"/>     
+					<mx:ComboBox id="sh" dataProvider="{starthour}" width="50" color="0x000000"/>
+					<mx:Label text="时"  height="25" width="30" />
+					<mx:Label text=" 至 "  height="25" width="30" />    
+					<mx:Label text="结束日期："/>     
+					<mx:DateField id="endDF" showToday="true" formatString="YYYY-MM-DD"     
+								  selectableRange="{{rangeStart:start}}" change="onDateChangeHandler(event)"/>  
+					<mx:ComboBox id="eh" dataProvider="{endhour}" width="50" color="0x000000"/>
+					<mx:Label text="时"  height="25" width="30" /> 
+					
+				</mx:ApplicationControlBar>  
+				
+			</s:HGroup>
+			
+			
+			<s:HGroup width="100%" height="50%">
+				
+				
+				<mx:AdvancedDataGrid  id="cartList" dataProvider="{Carts}" designViewDataType="flat" width="100%" height="100%">
+					<mx:columns>
+						<mx:AdvancedDataGridColumn  width="40"  headerText="Id" dataField="cart_id"/>
+						<mx:AdvancedDataGridColumn  width="160" headerText="订单号" dataField="num" />
+					 
+						<mx:AdvancedDataGridColumn  width="80" headerText="总价格" dataField="allprice" />
+						<mx:AdvancedDataGridColumn  width="80" headerText="状态" dataField="state" />
+						<mx:AdvancedDataGridColumn  width="250" headerText="日期" dataField="date"/>
+					</mx:columns>
+				</mx:AdvancedDataGrid>
+				
+			
+			</s:HGroup>
+			
+			<s:HGroup width="90%" height="7%" verticalAlign="bottom" >
+				<mx:ApplicationControlBar width="790" dock="true">
+				<s:Label width="360" text=""/>	
+					
+					
+				<s:Button id="preBon" label="上一页" click="prePage()"/>
+				<s:Button id="nextBon" label="下一页" click="nextPage()"/>
+				<s:Button id="jumpBon" label="跳转至" click="jumpPage()"/>
+				<s:NumericStepper id="pageChoice" minimum="1" maximum="{TotalPageNum}" value="{pageNumber}" width="50" height="21" />
+				<s:Label  verticalAlign="middle" text="页" width="15" height="22"  textAlign="center"/>
+				<s:Label textAlign="center" verticalAlign="middle" text=" 共{TotalPageNum}页   {TotalNum}条记录" width="100" height="22" />
+				</mx:ApplicationControlBar>
+			</s:HGroup>
+				
+			
+		</s:VGroup >
+		
+		
+	</mx:HDividedBox>
+	
+	
+
+</cw:DesktopWindow>

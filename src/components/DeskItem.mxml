@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="80" height="65"  buttonMode="true" useHandCursor="true">
+	<fx:Script>
+		<![CDATA[
+			[Bindable]
+			public var label:String="";
+			
+			[Bindable]
+			public var iconurl:String="";
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<mx:Image source="{iconurl}" horizontalCenter="0" width="40" height="40" smoothBitmapContent="true" />
+	
+	<s:Rect radiusX="10" width="100%" height="20" bottom="0" alpha="0.8">
+		<s:fill>
+			<s:SolidColor color="#000000" />
+		</s:fill>
+	</s:Rect>
+	
+	<s:Label text="{label}" height="20" bottom="0" width="100%" verticalAlign="middle"
+			 color="#ffffff"
+			 textAlign="center"/>
+	
+</s:Group>

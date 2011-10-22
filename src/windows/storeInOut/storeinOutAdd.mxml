@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"  creationComplete="init()" width="450" height="600" title="填写进出仓主干">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	
+	
+	
+	
+	<fx:Declarations>
+		
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="StoreInOut"   
+						 destination="storeInOutManager" channelSet="{cs}">
+			<mx:method name="save" result="handleResult_save(event)"/> 
+		
+		</mx:RemoteObject> 
+		
+		<mx:RemoteObject id="Store"   
+						 destination="storeManager" channelSet="{cs}">
+			<mx:method name="getNames" result="handleResult_getNames(event)"/> 
+			<mx:method name="loadByName" result="handleResult_loadByName(event)"/> 
+		</mx:RemoteObject>
+		
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import myAs.StoreInOutF;
+			import myAs.StoreF;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			public var callFunction:Function;//回调函数
+			
+			public var sNameArray:ArrayCollection = new ArrayCollection(); 
+			public var tempinOut : StoreInOutF = new StoreInOutF();
+			//public var 
+			
+			private function addSubmit() : void
+			{	
+				
+				tempinOut.satid = Number(satid.text);
+				tempinOut.code = String(code.text);
+				tempinOut.operator = String(operator.text);
+				tempinOut.people = String(people.text);
+				tempinOut.totalM = Number(totalM.text);
+				tempinOut.memo = String(memo.text);
+				
+			
+				if(billDate.selectedDate==null)
+					tempinOut.billDate=new Date();
+				else
+					tempinOut.billDate = billDate.selectedDate;
+				
+			
+				Store.loadByName(sName.text);
+				
+				
+				
+			}
+			protected function  init()
+			{
+			
+				Store.getNames();
+			
+			}
+			
+			
+			protected function handleResult_getNames(event:ResultEvent)
+			{
+				var tempList :  Array ;
+				
+				tempList= ArrayUtil.toArray(event.result);
+				sName.dataProvider =tempList[0];
+			
+			}
+			
+			protected function handleResult_loadByName(event:ResultEvent)
+			{
+				
+				var tempStore:StoreF =StoreF( event.result); 
+				
+			
+				tempinOut.store = tempStore;
+				
+				StoreInOut.save(tempinOut);
+				PopUpManager.removePopUp(this);
+				
+								
+			}
+			
+			protected function addReset()  : void
+			{
+				operator.text="";
+				people.text="";
+				totalM.text="";
+				memo.text="";
+				billDate.selectedDate =new Date();
+				satid.text="";
+			
+			}
+			protected function handleResult_save(event:ResultEvent):void
+			{	
+				if(event.result=="succeed"){
+					
+	                Alert.show("添加成功");
+					
+					callFunction.call(parent);
+					this.close();
+				}
+			    else
+			        Alert.show("添加失败");
+				
+						  
+			}
+		
+		]]>
+	</fx:Script>
+
+	<mx:Form x="51" y="29" width="400" height="500">
+		<mx:FormHeading label="填写进出仓单主干" width="76"/>
+		<mx:FormItem label="单据编号">
+			<mx:TextInput id="code" width="124" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="操作员">
+			<mx:TextInput id="operator" width="124" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="经办人">
+			<mx:TextInput id="people" width="124" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="仓库名">
+			<mx:ComboBox id="sName" dataProvider="{sNameArray}"   width="200"  />
+		</mx:FormItem>
+		<mx:FormItem label="总金额">
+			<mx:TextInput id="totalM" width="124" maxChars="100" />
+		</mx:FormItem>
+	
+		<mx:FormItem label="进填0   出填1">
+			<mx:TextInput id="satid" width="124" restrict="0-1" maxChars="50" />
+		</mx:FormItem>
+		<mx:FormItem label="备注">
+			<mx:TextInput id="memo" width="124" maxChars="100" />
+		</mx:FormItem>		
+		<mx:FormItem label="单据日期">
+			<mx:DateChooser id="billDate" height="169" width="160"/>
+		</mx:FormItem>
+		
+		
+	</mx:Form>	
+	<s:Button  id ="addS" x="83" y="450" label="添加" click="addSubmit()"/>
+	<s:Button id ="addR" x="190" y="450" label="重填" click="addReset()"/>
+</cw:DesktopWindow>

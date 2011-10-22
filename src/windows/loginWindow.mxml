@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"   width="405" height="285" title="用户登入" >
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="Admin"   
+						 destination="adminManager" channelSet="{cs}">
+			<mx:method name="check" result="handleResult_check(event)"/> 
+		</mx:RemoteObject> 
+		<s:Sequence id="shake" target="{loginPanel}">
+			<s:Move  xBy="20" duration="40" />
+			<s:Move  xBy="-20" duration="40"/>
+			<s:Move  xBy="20" duration="40"/>
+			<s:Move  xBy="-20" duration="40"/>
+			<s:Move  xBy="20" duration="40"/>
+			<s:Move  xBy="-20" duration="40"/>
+			<s:Move  xBy="20" duration="40"/>
+			<s:Move  xBy="-20" duration="40"/>
+		</s:Sequence>
+		
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.controls.Image;
+			import mx.events.FlexEvent;
+			import mx.rpc.events.ResultEvent; 
+			import mx.core.FlexGlobals;
+			import myAs.AdminF;
+			var flag : Boolean = true;
+			var isLogin : Boolean = false;	
+			public var callFunction:Function;//回调函数
+	
+	        public function handleResult_check(event:ResultEvent):void {  
+	                  
+			var  tempAdmin : AdminF = event.result as AdminF;
+	      
+	      
+	        if(tempAdmin==null)
+	        {
+				Alert.show("用户名或密码输入不正确!");
+			    shake.play(); 
+	        }
+	        else 
+	        {
+				isLogin = false;
+				Alert.show("登入成功!");
+				FlexGlobals.topLevelApplication.currentState="mainState";
+				FlexGlobals.topLevelApplication.mainAdmin =tempAdmin;
+				userName.editable= false;
+				pwd.editable =false;
+				btnOk.enabled=false;
+				exit.enabled=false;
+				this.close();
+			  
+			  
+	        }
+	        }    
+	
+	        protected function btnOk_clickHandler(event:MouseEvent):void
+	        {
+	
+				if(userName.text =="" || pwd.text == "")
+	            {
+					Alert.show("请输入用户名和密码 !");
+	            }
+	            else
+	            {
+	                Admin.check(userName.text,pwd.text);
+	            }
+	
+	        }
+	
+	      protected function exit_clickHandler(event:MouseEvent):void
+	      {
+			  userName.text ="";
+	          pwd.text ="";
+	      }
+	
+		]]>
+	</fx:Script>
+	
+	<s:Panel id="loginPanel"  width="400" height="250" >
+		<s:Label x="37" y="27" width="86" height="22" fontSize="17" text="用户名:"/>
+		<s:Label x="41" y="74" width="53" height="20" fontSize="17" text="密码:"/>
+		<s:TextInput x="154" y="27" id="userName" width="150"/>
+		<s:TextInput id="pwd" fontFamily="Arial" x="154" top="76" visible="true" width="150" displayAsPassword="true"/>
+		<s:Button x="78" y="184" label="登录" id="btnOk" click="btnOk_clickHandler(event)"/>
+		<s:Button x="198" y="184" label="重置" id="exit" click="exit_clickHandler(event)"/>
+		
+	</s:Panel> 
+
+</cw:DesktopWindow>

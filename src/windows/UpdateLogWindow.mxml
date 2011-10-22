@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx" 
+		   xmlns:cw="net.lanelife.framework.cw.*" 
+		   width="450" height="360" x="50" y="30"
+		   title="更新日志"
+		   minimizable="false" maximizable="false" resizable="false">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:TextArea left="10" top="10" right="10" bottom="10"
+				text="Cat Windows v1.1   时间：2011年06月05日&#xd;&#xd;1.修正已知BUG；&#xd;2.窗口加入滚动条，当内容区域超出窗口大小时显示滚动条；&#xd;3.增加标题栏菜单：还原、最小化、最大化、关闭；&#xd;4.增加鼠标处于任务栏按钮时的窗口预览；&#xd;5.任务栏按钮加入toolTip，当按钮文本超出按钮宽度时以...显示；&#xd;6.增加开始按钮类：net.lanelife.framework.cw.StartButton；&#xd;7.增加系统托盘类：net.lanelife.framework.cw.TrayIcon；&#xd;8.增加系统托盘容器：net.lanelife.framework.cw.TrayIconContainer；&#xd;9.增加提示对话框类：net.lanelife.framework.cw.Prompt，使用方法与mx.controls.Alert基本一致；&#xd;10.Window类增加windowOpened、windowClosed事件；&#xd;11.修改任务栏按钮为活动状态时的背景渐变色；&#xd;12.加入按钮外观、滚动条外观；&#xd;13.WindowManager类增加get方法，可根据Window.id取得窗口引用。">
+		
+	</s:TextArea>
+</cw:DesktopWindow>

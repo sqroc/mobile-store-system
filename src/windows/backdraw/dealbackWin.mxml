@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*" creationComplete="init()" width="400" height="550" title="退货处理">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	
+	
+	
+	
+	
+
+	
+	<fx:Declarations>
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="BackDraw"   
+						 destination="backDrawManager" channelSet="{cs}">
+			<mx:method name="modify" result="handleResult_modify(event)"/> 
+		
+		</mx:RemoteObject> 
+		<mx:RemoteObject id="Store"   
+						 destination="storeManager" channelSet="{cs}">
+			<mx:method name="getNames" result="handleResult_StoregetNames(event)"/>
+			<mx:method name="loadByName" result="handleResult_StoreloadByName(event)"/> 
+			
+		</mx:RemoteObject> 
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+		
+			import myAs.BackDrawF;
+		import myAs.StoreF;
+			public var callFunction:Function;//回调函数:
+			public var code_Id :String ="";
+			public var tempData : BackDrawF = new BackDrawF();
+			public var sNameArray:ArrayCollection = new ArrayCollection(); 
+			var tempBackDraw : BackDrawF = new BackDrawF();
+			private function addSubmit() : void
+			{					
+				
+				tempBackDraw.backDrawId=tempData.backDrawId;
+				tempBackDraw.code = String(code.text);
+				tempBackDraw.operator = String(operator.text);
+				tempBackDraw.backMan= String(backMan.text);
+				tempBackDraw.memo = String(memo.text);
+				tempBackDraw.totalM =tempData.totalM
+				tempBackDraw.user =tempData.user;
+				tempBackDraw.updateTime =new Date(); 
+				tempBackDraw.state="已处理";
+				
+				
+				if(billDate.selectedDate == null)
+				{	
+					tempBackDraw.billDate = new Date();
+				}
+				else
+					tempBackDraw.billDate = billDate.selectedDate;
+				
+				Store.loadByName(sName.text);
+				
+				
+			
+				
+			
+			}
+			public  function init() : void
+			{
+				Store.getNames();
+				code.text=code_Id;
+				memo.text = tempData.memo
+			}
+			
+			protected function handleResult_StoregetNames(event:ResultEvent)
+			{
+				var tempList :  Array ;
+				
+				tempList= ArrayUtil.toArray(event.result);
+				sName.dataProvider =tempList[0];
+				
+			}
+			
+			protected function handleResult_StoreloadByName(event:ResultEvent)
+			{
+				
+				var tempStore :StoreF = StoreF(event.result); 
+				if(tempStore==null)
+					Alert.show("空");
+				tempBackDraw.store=tempStore;
+				
+				BackDraw.modify(tempBackDraw);
+				PopUpManager.removePopUp(this);
+				
+				
+			}
+			
+			protected function addReset()  : void
+			{
+                code.text=code_Id;
+				operator.text="";
+				memo.text="";
+				
+					
+			}
+			protected function handleResult_modify(event:ResultEvent):void
+			{	
+				if(event.result=="succeed"){
+					
+				    Alert.show("添加成功");
+					PopUpManager.removePopUp(this);
+					callFunction.call(parent);
+					this.close();
+				}
+			    else
+			        Alert.show("用户名已经存在!");
+				
+			    }
+		
+		]]>
+	</fx:Script>
+	    <mx:Form  x="53" y="28" width="300" height="400">
+			<mx:FormHeading label="请填退货单信息：" textAlign="left" width="191"/>
+			
+			<mx:FormItem label="单据号">
+				<s:Label id="code" width="150" />
+			</mx:FormItem>
+	
+			<mx:FormItem label="退入仓库名">
+				<mx:ComboBox id="sName" dataProvider="{sNameArray}" width="150" color="0x000000"/>
+			</mx:FormItem>
+			
+			<mx:FormItem label="生成日期"  width="267">
+				<mx:DateChooser id="billDate" height="169" width="160"/>
+			</mx:FormItem>
+			<mx:FormItem label="退货员">
+				<mx:TextInput id="backMan" width="150"  maxChars="100"/>
+			</mx:FormItem>
+		   <mx:FormItem label="操作员姓名">
+			   <mx:TextInput id="operator" width="150"  maxChars="100"/>
+		   </mx:FormItem>
+		   <mx:FormItem label="备注">
+			   <mx:TextInput id="memo" width="150"  maxChars="100"/>
+		   </mx:FormItem>
+		  
+			
+		</mx:Form>
+		<s:Button id ="addS"  x="53" y="420" label="确定" width="101" click="addSubmit()"/>
+		<s:Button id ="addR"  x="238" y="420" label="重填" width="115" click="addReset()"/>
+	    <!--<s:Button id ="showItemorder"  x="238" y="375" label="重填" width="115" click="showOrder()"/>-->
+	
+	
+
+		
+
+	
+	
+
+</cw:DesktopWindow>

@@ -1,0 +1,84 @@
+package ms.dao.impl;
+
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.hibernate.HibernateException;
+import org.hibernate.Session;
+import org.springframework.orm.hibernate3.HibernateCallback;
+import org.springframework.orm.hibernate3.HibernateTemplate;
+import org.springframework.stereotype.Repository;
+
+import ms.dao.ItemDao;
+import ms.model.Category;
+import ms.model.Item;
+
+@Repository("ItemDao")
+public class ItemDaoImpl implements ItemDao {
+	private HibernateTemplate hibernateTemplate;
+
+	public HibernateTemplate getHibernateTemplate() {
+		return hibernateTemplate;
+	}
+
+	@Resource
+	public void setHibernateTemplate(HibernateTemplate hibernateTemplate) {
+		this.hibernateTemplate = hibernateTemplate;
+	}
+
+	public void save(Item item) {
+		hibernateTemplate.save(item);
+
+	}
+
+	public int deleletByid(int id) {
+		Item itemtemp = new Item();
+		itemtemp.setItem_id(id);
+		hibernateTemplate.delete(itemtemp);
+		return 1;
+	}
+
+	public void modify(Item item) {
+		hibernateTemplate.update(item);
+
+	}
+
+	public List<Item> getItems(final int start, final int limit) {
+		List<Item> items = hibernateTemplate
+				.executeFind(new HibernateCallback() {
+					public Object doInHibernate(Session session)
+							throws HibernateException, SQLException {
+						org.hibernate.Query query = (org.hibernate.Query) session
+								.createQuery("from Item");
+
+						query.setFirstResult(start);
+						query.setMaxResults(limit);
+
+						List<Item> list = (List<Item>) query.list();
+						return list;
+					}
+				});
+
+	
+	
+
+		if (items != null) {
+			for (int i = 0; i < items.size(); i++) {
+				String tempName = (items.get(i).getCategory().getName());
+				items.get(i).setCategoryName(tempName);
+
+			}
+
+		}
+
+		return items;
+	}
+
+	public int getTotalNum() {
+		String hql = "select count(*) from Item as item";
+		return ((Long) getHibernateTemplate().iterate(hql).next()).intValue();
+	}
+
+}

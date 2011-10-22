@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*" creationComplete="init()" width="400" height="500" title="配货单">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	
+	
+	
+	
+	<fx:Declarations>
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="DrawItem"   
+						 destination="drawItemManager" channelSet="{cs}">
+			<mx:method name="save" result="handleResult_save(event)"/> 
+		
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			
+			import myAs.DrawItemF;
+			
+			public var callFunction:Function;//回调函数:
+			public var code_id :String ="";
+			
+
+			
+			private function addSubmit() : void
+			{					
+				var tempDrawItem : DrawItemF = new DrawItemF();
+				tempDrawItem.code = String(code.text);
+				tempDrawItem.operator = String(operator.text);
+				tempDrawItem.drawMan = String(drawMan.text);
+				tempDrawItem.memo = String(memo.text);
+				
+				//public var  store : Object; // 仓库ID Store
+				if(billDate.selectedDate == null)
+				{	
+					tempDrawItem.billDate = new Date();
+				}
+				else
+					tempDrawItem.billDate = billDate.selectedDate;
+				
+			
+				DrawItem.save(tempDrawItem);
+				
+			
+				
+			
+			}
+			public  function init() : void
+			{
+			
+				code.text=code_id+"";
+			}
+			
+			protected function showOrder()  : void
+			{
+				
+			}
+			protected function addReset()  : void
+			{
+				callFunction.call(parent);
+				this.close();
+				
+//                code.text=code_id;
+//				operator.text="";
+//				drawMan.text="";
+//			    memo.text="";
+//				billDate.selectedDate = new Date();
+					
+			}
+			protected function handleResult_save(event:ResultEvent):void
+			{	
+				if(event.result=="succeed"){
+					
+				    Alert.show("添加成功");
+					PopUpManager.removePopUp(this);
+					
+					
+					
+					callFunction.call(parent);
+					this.close();
+				}
+			    else
+			        Alert.show("添加异常存在");
+				
+			    }
+		
+		]]>
+	</fx:Script>
+	    <mx:Form  x="53" y="28" width="300" height="400">
+			<mx:FormHeading label="请填领货单信息：" textAlign="left" width="191"/>
+			
+			<mx:FormItem label="单据号">
+				<s:Label id="code" width="150" />
+			</mx:FormItem>
+			<mx:FormItem label="领料人姓名">
+				<mx:TextInput id="drawMan" width="150"  maxChars="100"/>
+			</mx:FormItem>
+		   
+			<!--<mx:FormItem label="仓库ID">
+				<mx:ComboBox id="store" dataProvider="{ranks}" width="200" color="0x000000"/>
+			</mx:FormItem>
+			-->
+			<mx:FormItem label="单据日期"  width="267">
+				<mx:DateChooser id="billDate" height="169" width="160"/>
+			</mx:FormItem>
+		   <mx:FormItem label="操作员姓名">
+			   <mx:TextInput id="operator" width="150"  maxChars="100"/>
+		   </mx:FormItem>
+		   <mx:FormItem label="备注">
+			   <mx:TextInput id="memo" width="150"  maxChars="100"/>
+		   </mx:FormItem>
+		  
+			
+		</mx:Form>
+		<s:Button id ="addS"  x="53" y="375" label="确定" width="101" click="addSubmit()"/>
+		<s:Button id ="addR"  x="238" y="375" label="重填" width="115" click="addReset()"/>
+	
+	
+	
+	
+		
+		
+
+	
+	
+
+</cw:DesktopWindow>

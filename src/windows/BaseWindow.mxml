@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx" 
+		   xmlns:cw="net.lanelife.framework.cw.*" 
+		   width="400" height="300"
+		   x="200" y="50"
+		   title="基本窗口演示"
+		   icon="images/logo.png">
+	
+	<fx:Script>
+		<![CDATA[
+			import net.lanelife.framework.cw.Dimension;
+			import net.lanelife.framework.cw.Window;
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				this.setSize(new Dimension(parseInt(w.text), parseInt(h.text)));
+			}
+			
+			protected function button2_clickHandler(event:MouseEvent):void
+			{
+				this.setPosition(new Point(parseInt(px.text), parseInt(py.text)));
+			}
+			
+			protected function button3_clickHandler(event:MouseEvent):void
+			{
+				var win:Window = new Window("无最小化按钮窗口",this);
+				win.width = 250;
+				win.height = 150;
+				win.x = 100;
+				win.y = 50;
+				win.minimizable = false;
+				win.show();
+			}
+			
+			protected function button4_clickHandler(event:MouseEvent):void
+			{
+				var win:Window = new Window("无最大化按钮窗口",this);
+				win.width = 250;
+				win.height = 150;
+				win.x = 100;
+				win.y = 50;
+				win.maximizable = false;
+				win.show();
+			}
+			
+			protected function button5_clickHandler(event:MouseEvent):void
+			{
+				var win:Window = new Window("不可改变大小窗口",this);
+				win.width = 300;
+				win.height = 200;
+				win.x = 100;
+				win.y = 50;
+				win.resizable = false;
+				win.show();
+			}
+			
+			protected function button6_clickHandler(event:MouseEvent):void
+			{
+				var win:Window = new Window("不可拖动窗口",this);
+				win.width = 300;
+				win.height = 200;
+				win.x = 100;
+				win.y = 50;
+				win.draggable = false;
+				win.show();
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	<s:VGroup left="10" top="10" gap="10">
+		<s:HGroup>
+			<s:Label text="宽:" height="100%" verticalAlign="middle"/>
+			<s:TextInput id="w" width="50" text="300" />
+			<s:Label text="高:" height="100%" verticalAlign="middle"/>
+			<s:TextInput id="h" width="50" text="150" />
+			<s:Button label="改变窗口大小" click="button1_clickHandler(event)" />
+		</s:HGroup>
+		<s:HGroup>
+			<s:Label text="X坐标:" height="100%" verticalAlign="middle"/>
+			<s:TextInput id="px" width="50" text="150" />
+			<s:Label text="Y坐标:" height="100%" verticalAlign="middle"/>
+			<s:TextInput id="py" width="50" text="100" />
+			<s:Button label="改变窗口位置" click="button2_clickHandler(event)" />
+		</s:HGroup>
+		<s:Button label="无最小化按钮窗口" click="button3_clickHandler(event)" />
+		<s:Button label="无最大化按钮窗口" click="button4_clickHandler(event)" />
+		<s:Button label="不可改变大小窗口" click="button5_clickHandler(event)" />
+		<s:Button label="不可拖动窗口" click="button6_clickHandler(event)" />
+	</s:VGroup>
+</cw:DesktopWindow>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*" width="504" height="350"
+		   x="50" y="50" title="关于" minimizable="false" maximizable="false" resizable="false">
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:Image source="images/about.png" width="500" height="130" smooth="true" />
+	
+	<s:Label left="10" top="140" right="10" bottom="10"
+				text="Cat Windows 是由蓝易实验室开发的一套Flex Web Windows框架。使用本框架可以轻松构建网页版Windows，本框架封装了开始按钮、任务栏按钮、系统托盘、基本窗口、模式窗口、提示对话框等窗口工具集，并实现窗口外观，只需指定一种颜色或一张图片，就能更换窗口外观。&#xd;&#xd;本框架版本不定时更新，如需即时获得最新版本，请加入QQ群：8716093&#xd;&#xd;&#xd;Cat Windows 为开源框架，欢迎广大WEB爱好者测试与完善！">
+		
+	</s:Label>
+</cw:DesktopWindow>

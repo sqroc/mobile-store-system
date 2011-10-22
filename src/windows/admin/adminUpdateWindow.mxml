@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"  creationComplete="init()"  width="400" height="500" title="修改管理员信息">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	
+	
+	
+	
+	<fx:Declarations>
+		<mx:StringValidator source="{usernameU}" property="text" maxLength="10" minLength="2" tooShortError="至少输入2个字" tooLongError="最多输入10个字"/>
+		<mx:StringValidator source="{passwordU}" property="text" maxLength="20" minLength="3" tooShortError="密码最少3位" tooLongError="密码最多20位"/>
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="Admin"   
+						 destination="adminManager" channelSet="{cs}">
+			<mx:method name="modify" result="handleResult_modify(event)"/> 
+			
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;
+			import myAs.AdminF;
+			public var callFunctionUpdate:Function;//回调函数
+			public var tempData:AdminF ;
+			private var tempAdmin : AdminF = new AdminF();
+			
+			[Bindable]
+			public var ranks:ArrayCollection = new ArrayCollection(
+				[ {label:"超级管理员",data:0},
+					{label:"普通管理员",data:1}, 
+					{label:"仓库管理员",data:2}, 
+					{label:"客服人员", data:3} ]);
+			
+			[Bindable]
+			public var genders:ArrayCollection = new ArrayCollection(
+				[ {label:"男",data:0}, 
+					{label:"女", data:1 }]);
+			
+			
+			private function updateSubmit() : void
+			{	
+				var tempAdmin : AdminF = new AdminF();
+				tempAdmin.aid = tempData.aid;
+				tempAdmin.username = String(usernameU.text);
+				tempAdmin.password = String(passwordU.text);
+				
+				
+				if(genderU.text=="男")
+					tempAdmin.gender=0;
+				else
+					tempAdmin.gender=1;
+				
+				if(rankU.text=="超级管理员")
+					tempAdmin.rank=0;
+				else if(rankU.text=="普通管理员")
+					tempAdmin.rank=1;
+				else if(rankU.text=="仓库管理员")
+					tempAdmin.rank=2;
+				else if(rankU.text=="客服人员")
+					tempAdmin.rank=3;
+				
+				
+				if(addDateU.selectedDate == null)
+				{	
+					tempAdmin.addDate = tempData.addDate;
+				}
+				else
+					tempAdmin.addDate = addDateU.selectedDate;
+				
+				Admin.modify(tempAdmin);
+				PopUpManager.removePopUp(this);
+			
+			}
+			protected function init():void
+			{
+
+			     if(tempData !=null)
+				 {
+					 usernameU.text = tempData.username;
+					 passwordU.text = tempData.password;
+					 
+					 if(tempData.gender==0)
+						 genderU.text="男";
+					 else
+						 genderU.text="女";
+					 
+				
+					
+					 if(tempData.rank==0)
+					rankU.text=="超级管理员";
+					 else if(tempData.rank==1)
+						
+					 rankU.text=="普通管理员";
+					 else if(tempData.rank==2)
+						
+					 rankU.text=="仓库管理员";
+					 else if(tempData.rank==3)
+						 
+					 rankU.text=="客服人员";
+					 
+					 addDateU.selectedDate = tempData.addDate;
+				 }
+			}
+			
+			protected function updateReset()  : void
+			{
+		        init();
+            }
+			protected function handleResult_modify(event:ResultEvent):void
+			{
+				if(event.result=="succeed")
+				{
+					Alert.show("修改成功");
+					
+					callFunctionUpdate.call(parent);
+					this.close();
+				}
+				else
+					Alert.show("修改失败");
+			}
+		
+		]]>
+	</fx:Script>
+
+
+		
+	<mx:Form  x="53" y="28" width="300" height="400">
+		<mx:FormHeading label="请填写用户信息：" textAlign="left" width="191"/>
+		
+		<mx:FormItem label="用户名">
+			<s:TextInput id="usernameU" editable="false" width="200" maxChars="10" text="update"/>
+		</mx:FormItem>
+		<mx:FormItem label="密码">
+			<s:TextInput id="passwordU" width="200" displayAsPassword="true" maxChars="20"/>
+		</mx:FormItem>
+		<mx:FormItem label="权限">
+			<mx:ComboBox id="rankU" dataProvider="{ranks}" width="200" color="0x000000"/>
+		</mx:FormItem>
+		
+		<mx:FormItem label="性别">
+			<mx:ComboBox id="genderU" dataProvider="{genders}" width="200" color="0x000000"/>
+		</mx:FormItem>
+		<mx:FormItem label="添加日期"  width="267">
+			<mx:DateChooser id="addDateU" height="169" width="199"/>
+		</mx:FormItem>
+		
+	</mx:Form>
+	<s:Button id ="updateS" x="53" y="375" label="确定" width="101" click="updateSubmit()"/>
+	<s:Button id ="updateR" x="238" y="375" label="重填" width="115" click="updateReset()"/>
+	
+		
+
+</cw:DesktopWindow>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*" width="400" height="470" title="添加供应商" >
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	
+	
+	
+	
+	<fx:Declarations>
+	
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="Provider"   
+						 destination="providerManager" channelSet="{cs}">
+			<mx:method name="add" result="handleResult_add(event)"/> 
+		
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			
+			import myAs.ProviderF;
+			
+			public var callFunction:Function;//回调函数
+			
+			private function addSubmit() : void
+			{	
+				var tempProvider : ProviderF = new ProviderF();
+				tempProvider.name = String(username.text);
+			    tempProvider.supervisor = String(supervisor.text);
+				tempProvider.phone = String(phone.text);
+				tempProvider.address = String(address.text);
+				tempProvider.postcode = String(postcode.text);
+			    Provider.add(tempProvider);
+				PopUpManager.removePopUp(this);
+			
+				
+			
+			}
+			protected function addReset()  : void
+			{
+				username.text="";
+				phone.text = "";
+				address.text = "";
+				postcode.text="";
+				supervisor.text="";
+			
+				
+			}
+			protected function handleResult_add(event:ResultEvent):void
+			{	
+				if(event.result=="succeed"){
+					
+	                Alert.show("添加成功");
+					callFunction.call(parent);
+					this.close();
+				}
+			    else
+			        Alert.show("添加失败，供应商名已存在");
+				
+						  
+			}
+		
+		]]>
+	</fx:Script>
+       <mx:Form  x="53" y="28" width="300" height="400">
+			<mx:FormHeading label="请填写用户信息：" textAlign="left" width="191"/>
+			
+			<mx:FormItem label="供应商名">
+				<mx:TextInput id="username" width="200" maxChars="100" />
+			</mx:FormItem>
+			
+			<mx:FormItem label="负责人">
+				<mx:TextInput id="supervisor" width="200" maxChars="100" />
+			</mx:FormItem>
+			
+			<mx:FormItem label="电话">
+				<mx:TextInput id="phone" restrict="0-9" width="200" maxChars="100" />
+			</mx:FormItem>
+		   <mx:FormItem label="邮编">
+			   <mx:TextInput id="postcode" restrict="0-9" width="200" maxChars="100" />
+		   </mx:FormItem>
+			<mx:FormItem label="详细地址">
+				<mx:TextInput id="address" width="200" maxChars="100" />
+			</mx:FormItem>
+		
+		</mx:Form>
+		<s:Button id ="addS"  x="53" y="275" label="确定" width="101" click="addSubmit()"/>
+		<s:Button id ="addR"  x="238" y="275" label="重填" width="115" click="addReset()"/>
+
+</cw:DesktopWindow>

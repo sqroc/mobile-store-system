@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"   creationComplete="initWindow()" width="800" height="450" title="adminManager">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	<fx:Declarations>
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="ItemProvider"   
+						 destination="itemProviderManager" channelSet="{cs}">
+			<mx:method name="getItemProviders" result="handleResult_getItemProviders(event)"/> 
+            <mx:method name="getTotalNum" result="handleResult_getTotalNum(event)"/> 
+			
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.controls.Image;
+			import mx.core.FlexGlobals;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			
+			import myAs.ProviderF;
+			import myAs.ItemProviderF;
+			import net.lanelife.framework.cw.Dialog;
+			import net.lanelife.framework.cw.Dimension;
+			import net.lanelife.framework.cw.Window;
+			
+		
+			public var  itemId_ip :int ;//订单号
+			[Bindable] 
+		    public var ItemProviders:ArrayUtil = new ArrayUtil(); 
+			
+			[Bindable]
+            private var pageNumber : int = 1;
+			
+			[Bindable]
+			private var pageLimit : int = 4;
+			
+			[Bindable]
+			private var TotalNum : int = -1;
+			
+			[Bindable]
+			private var TotalPageNum : int = -1;
+			//专用回调函数 ，替代 initWindow 刷新数据时留在先前页
+			
+			public function childCallback():void
+			{
+				ItemProvider.getTotalNum(itemId_ip);	
+				ItemProvider.getItemProviders((pageNumber-1)*pageLimit,pageLimit,itemId_ip);
+			}
+			private function makeTotalPageNum():void
+			{
+				if(TotalNum % pageLimit ==0)
+				{
+					TotalPageNum = TotalNum/pageLimit;
+				}
+				else 
+					TotalPageNum = TotalNum/pageLimit + 1;
+			}
+			
+			
+			protected function initWindow():void
+			{
+				ItemProvider.getTotalNum(itemId_ip);
+				ItemProvider.getItemProviders(0,pageLimit,itemId_ip);
+			}
+	
+			
+		
+		
+			public function handleResult_getTotalNum(event:ResultEvent):void
+			{
+				TotalNum  = int(event.result);
+				makeTotalPageNum();
+		
+				
+			}
+			
+			public function handleResult_getItemProviders(event:ResultEvent):void
+			{
+				 
+				var tempList :  Array ;
+				if(event.result!=null){
+					tempList= ArrayUtil.toArray(event.result);
+					itemProviderList.dataProvider=tempList[0];
+				}else{
+					Alert.show("没有找到相关任务信息");
+				}
+
+			}	
+			public function	deleteProvider(event:MouseEvent):void
+			{
+		
+//				var  id : int  = int(providerList.selectedItem.pid);
+//				if(id!=0)
+//				{
+//					ItemProvider.deleletByid(id);
+//				  
+//				}
+//			
+			}
+			
+//			public function showAddProvider(event:MouseEvent):void
+//		    {
+//
+//			   var ProviderWin:providerAdd  = providerAdd(PopUpManager.createPopUp(this,providerAdd,false));
+//			   ProviderWin.resizable = false;
+//			   ProviderWin.maximizable = false;
+//			   ProviderWin.callFunction = this.childCallback; // 子窗体中可以调用的父窗体函数（这里是子窗体关闭时，用来刷新父窗体的内容 
+//			   PopUpManager.centerPopUp(ProviderWin);
+//			   
+//		 }
+			
+			
+			protected function showUpdateItemProvider(event:MouseEvent):void
+			{
+				
+				var tempItemProvider : ItemProviderF = new ItemProviderF();
+				tempItemProvider.ipid = itemProviderList.selectedItem.ipid;
+				tempItemProvider.cost = itemProviderList.selectedItem.cost;
+				tempItemProvider.price = itemProviderList.selectedItem.price;
+				tempItemProvider.pName=itemProviderList.selectedItem.pName;
+				tempItemProvider.itid = itemProviderList.selectedItem.itid;
+				tempItemProvider.pid = itemProviderList.selectedItem.pid;
+	            var pWin:ipUpdate  = ipUpdate(PopUpManager.createPopUp(this,ipUpdate,false));
+				pWin.resizable = false;
+				pWin.maximizable = false;
+				pWin.tempData = tempItemProvider;
+				pWin.callFunctionUpdate = this.childCallback; // 子窗体中可以调用的父窗体函数（这里是子窗体关闭时，用来刷新父窗体的内容 
+				PopUpManager.centerPopUp(pWin);
+			
+			}
+			
+			//上一页
+			private function prePage():void{
+				if(pageNumber > 1){
+					pageNumber -= 1;
+					ItemProvider.getItemProviders((pageNumber-1)*pageLimit,pageLimit,itemId_ip);
+					
+				}
+			}
+			//下一页
+			private function nextPage():void{
+				if(pageNumber < this.pageChoice.maximum){
+					pageNumber += 1;
+					ItemProvider.getItemProviders((pageNumber-1)*pageLimit,pageLimit,itemId_ip);
+
+				}
+			}
+			//跳转至
+			private function jumpPage():void{
+			
+				ItemProvider.getItemProviders((pageChoice.value-1)*pageLimit,pageLimit,itemId_ip);
+			}
+			private function changeLimite():void{
+				
+				pageLimit = Limite.value;
+				makeTotalPageNum();
+				ItemProvider.getItemProviders((pageChoice.value-1)*pageLimit,pageLimit,itemId_ip);
+			}
+
+		]]>
+	</fx:Script>
+	
+
+
+	<mx:HDividedBox width="100%" height="100%" >
+		
+		<s:VGroup  height="100%" width="100%">
+			<s:HGroup width="90%" height="10%">
+				<s:Label text="当前供应商：" height="30" verticalAlign="middle" textAlign="center"/>
+				<s:Label id="curadminName" width="229" verticalAlign="middle" textAlign="center" height="30" text="{itemProviderList.selectedItem.ipid}"/>
+				<s:Button label="删除" id="deleteUserBon" height="30" width="85" />
+			</s:HGroup>
+			<s:HGroup width="90%" height="10%">
+				<s:Button label="添加" id="addUserBon" width="85" height="30"/>
+				<s:Button label="修改" id="updateUserBon" width="85" height="30" click="showUpdateItemProvider(event)"/>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" height="50%">
+			
+				
+				<mx:AdvancedDataGrid  id="itemProviderList" dataProvider="{ItemProviders}" designViewDataType="flat" width="100%" height="100%">
+					<mx:columns>
+						<mx:AdvancedDataGridColumn  width="40" headerText="Id" dataField="ipid"/>
+						<mx:AdvancedDataGridColumn  width="80" headerText="pName" dataField="pName"/>
+						<mx:AdvancedDataGridColumn  width="80" headerText="药品id" dataField="itid"/>
+						<mx:AdvancedDataGridColumn  width="80" headerText="供应商id" dataField="pid"/>
+						<mx:AdvancedDataGridColumn  width="80" headerText="item_name" dataField="item_name"/>
+						<mx:AdvancedDataGridColumn  width="80" headerText="cost" dataField="cost" />
+					    <mx:AdvancedDataGridColumn  width="80" headerText="price" dataField="price"/>
+					
+						
+					</mx:columns>
+				</mx:AdvancedDataGrid>
+			</s:HGroup>
+			
+			<s:HGroup width="90%" height="10%" verticalAlign="bottom" >
+				<s:Button id="preBon" label="上一页" click="prePage()"/>
+				<s:Button id="nextBon" label="下一页" click="nextPage()"/>
+				<s:Button id="jumpBon" label="跳转至" click="jumpPage()" />
+				<s:NumericStepper id="pageChoice" minimum="1" maximum="{TotalPageNum}" value="{pageNumber}" width="50" height="21" y="7"/>
+				<s:Label  verticalAlign="middle" text="页" width="33" height="22" y="6"  textAlign="center"/>
+				<s:Label textAlign="center" verticalAlign="middle" text="  共{TotalPageNum}页      {TotalNum}条记录" width="160" height="22" y="6"/> 
+			</s:HGroup>
+			<s:HGroup width="90%" height="10%" verticalAlign="bottom" >
+				<s:NumericStepper id="Limite" minimum="3"  maximum="7" value="{pageLimit}" width="50" height="21" y="7"/>
+				<s:Label  verticalAlign="middle" text="条每页" width="50" height="22" y="6"  textAlign="center"/>
+				<s:Button id="LimiteBon" label="更改" click="changeLimite()" />
+				
+			</s:HGroup>
+		</s:VGroup >
+		
+		
+	</mx:HDividedBox>
+	
+	
+
+</cw:DesktopWindow>

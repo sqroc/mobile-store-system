@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*" width="500" height="610" creationComplete="init()" title="添加药品">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	
+	
+	
+	
+	<fx:Declarations>
+	
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="Item"   
+						 destination="itemManager" channelSet="{cs}">
+			<mx:method name="add" result="handleResult_add(event)"/> 
+		
+		</mx:RemoteObject> 
+		
+		<mx:RemoteObject id="Category"   
+						 destination="categoryManager" channelSet="{cs}">
+			<mx:method name="getCNames" result="handleResult_getCNames(event)"/> 
+			
+		</mx:RemoteObject> 
+		
+		
+		
+		<mx:RemoteObject id="Provider"   
+						 destination="providerManager" channelSet="{cs}">
+			<mx:method name="getPNames" result="handleResult_getPNames(event)"/> 
+			
+		</mx:RemoteObject> 
+		
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import flash.net.*;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.remoting.mxml.RemoteObject;
+			import mx.utils.*;
+			import mx.utils.ArrayUtil;
+			import mx.utils.URLUtil;
+			import mx.core.Application;
+			import myAs.CategoryF;
+			import myAs.ItemF;
+			import flash.events.*;
+			import flash.net.FileReference;
+			import mx.events.CloseEvent;
+			public var callFunction:Function;//回调函数
+			
+			public var finalfilename  :String = "no";
+			
+			
+			[Bindable] 
+			public var cNameArray:ArrayCollection = new ArrayCollection(); 
+			
+			public var pNameArray:ArrayCollection = new ArrayCollection(); 
+			
+			
+			private var tempStr:String ="";
+			
+			private var serverName:String ="";
+			private var serverPort:String="";
+			private var serverProtocol:String="";
+				
+			
+			private function addSubmit() : void
+			{	
+				var tempItem : ItemF = new ItemF();
+				tempItem.item_name = String(item_name.text);
+				tempItem.standard = String(standard.text);
+				tempItem.product_num = String(product_num.text);
+			    tempItem.categoryName =  categoryName.text;
+				tempItem.store_num =int(store_num.text);
+				tempItem.intro = String(intro.text);
+				tempItem.e_item_name =e_item_name.text;
+				tempItem.img_url = "attach/"+finalfilename;
+				tempItem.cost = Number(cost.text);
+				tempItem.price = Number(price.text);
+				tempItem.providerName=providerName.text;
+				Item.add(tempItem);
+				
+			}
+			protected function addReset()  : void
+			{
+			
+				 item_name.text="";
+			     standard.text="";
+				 product_num.text="";
+		         store_num.text="";
+				 intro.text = "";
+				 e_item_name.text ="";
+				 cost.text = "";
+			     price.text="";
+			}
+			
+			public function handleResult_getPNames(event:ResultEvent):void
+			{
+				
+				var tempList :  Array ;
+			
+					tempList= ArrayUtil.toArray(event.result);
+					providerName.dataProvider =tempList[0];
+		
+				
+			}	
+			public function handleResult_getCNames(event:ResultEvent):void
+			{
+				
+				var tempList :  Array ;
+			
+				tempList= ArrayUtil.toArray(event.result);
+				categoryName.dataProvider =tempList[0];
+			}	
+
+			protected function handleResult_add(event:ResultEvent):void
+			{	
+				if(event.result=="succeed"){
+					
+	                Alert.show("添加成功");
+					PopUpManager.removePopUp(this);
+					callFunction.call(parent);
+					this.close();
+				}
+			    else
+			        Alert.show("添加失败");
+			
+						  
+			}
+			
+			
+			//一下为上传代码 //文件上传
+			private var fileReference:FileReference=new FileReference();
+			private var byteArray:ByteArray;
+			private var bitmapData:BitmapData;
+			private var loader:Loader=new Loader();
+			
+		
+			
+			private function init():void
+			{   
+				
+				tempStr = Application.application.url;
+				serverName = URLUtil.getServerName(tempStr);
+				serverPort = URLUtil.getPort(tempStr).toString();
+				serverProtocol = URLUtil.getProtocol(tempStr);
+				
+				Provider.getPNames();
+				Category.getCNames();
+				fileReference.addEventListener(Event.COMPLETE,fileReferenceCompleteHandler);
+			}
+			private function fileReferenceCompleteHandler(e:Event):void
+			{
+				byteArray = fileReference.data;
+				loader.contentLoaderInfo.addEventListener(Event.COMPLETE,loaderCompleteHandler);
+				loader.loadBytes(byteArray);
+			}
+			private function loaderCompleteHandler(e:Event):void
+			{
+				var bitmap:Bitmap = Bitmap(loader.content);
+				bitmapData = bitmap.bitmapData;
+				img.source = bitmap;
+			  
+
+			}
+			private function fileReferenceSelectHandler(E:Event):void
+			{
+				Alert.show("确认将" + fileReference.name + "上传于服务器",
+					"",
+					Alert.YES|Alert.NO,
+					null,
+					proceedWithUpload);
+				    fileReference.load();
+				
+			}
+			private function proceedWithUpload(E: CloseEvent): void{
+				
+				
+				var dt:Date = new Date();
+				var filedate : String = dt.fullYear.toString()+(dt.month+1).toString()+dt.date.toString()+dt.hours.toString()+dt.minutes.toString()+dt.seconds.toString();
+				
+				var flagindex :int = fileReference.name.lastIndexOf(".");
+				
+				var fileext :String = fileReference.name.slice(flagindex);
+				
+				finalfilename  = filedate+fileext;
+				var httpURL:String = serverProtocol + "://" + serverName + ":" +serverPort+"/"+"mobile-store-system/";
+
+				if (E.detail == Alert.YES){
+					var request: URLRequest = new URLRequest(httpURL+"FileUploaded?final="+finalfilename+"");
+					try {
+						fileReference.upload(request);
+					} catch (error:Error) {
+						trace("上传失败");
+					}
+				
+				}
+			}
+			private function btnClick():void
+			{
+				var imageTypes:FileFilter = new FileFilter("Images (*.jpg, *.jpeg, *.png)", "*.jpg;*.jpeg;*.png");
+				var allTypes:Array = new Array(imageTypes);
+				fileReference.browse(allTypes);
+				fileReference.addEventListener(Event.SELECT,fileReferenceSelectHandler);
+			}
+		]]>
+	</fx:Script>
+
+	<mx:Form  x="53" y="28" width="400" height="400">
+		<mx:FormHeading label="请填写药品信息：" textAlign="left" width="191"/>
+		
+		<mx:Image id="img" width="150" height="150"/>
+		<mx:Button label="选择图片" click="btnClick()"/>
+		
+		
+		<mx:FormItem label="药品名">
+			<mx:TextInput id="item_name" width="200" maxChars="100" />
+		</mx:FormItem>
+		<mx:FormItem label="英文名">
+			<mx:TextInput id="e_item_name" width="200"  maxChars="100"/>
+		</mx:FormItem>
+		<mx:FormItem label="规格">
+			<mx:TextInput id="standard" width="200"  maxChars="100"/>
+		</mx:FormItem>
+		<mx:FormItem label="分类">
+			<mx:ComboBox id="categoryName" dataProvider="{cNameArray}"  labelField="" width="200"  />
+		</mx:FormItem>
+		<mx:FormItem label="供应商">
+			<mx:ComboBox id="providerName" dataProvider="{pNameArray}"  labelField="" width="200"  />
+		</mx:FormItem>
+		<mx:FormItem label="产品编号">
+			<mx:TextInput id="product_num" width="200"  maxChars="100"/>
+		</mx:FormItem>
+		<mx:FormItem label="库存">
+			<mx:TextInput id="store_num" restrict="0-9\." width="200"  maxChars="100"/>
+		</mx:FormItem>
+		<mx:FormItem label="进价">
+			<mx:TextInput id="cost" width="200" restrict="0-9\." maxChars="100"/>
+		</mx:FormItem>
+		<mx:FormItem label="售价">
+			<mx:TextInput id="price" width="200" restrict="0-9\." maxChars="100"/>
+		</mx:FormItem>
+		<mx:FormItem label="功能简介">
+			<s:TextArea id="intro" x="180" y="180"/>
+			
+		</mx:FormItem>
+		
+	</mx:Form>
+	<s:Button id ="addS"  x="53" y="460" label="确定" width="115" click="addSubmit()"/>
+	<s:Button id ="addR"  x="238" y="460" label="重填" width="115" click="addReset()"/>
+	
+
+</cw:DesktopWindow>

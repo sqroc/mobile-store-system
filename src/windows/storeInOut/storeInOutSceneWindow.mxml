@@ -1,0 +1,503 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cw:DesktopWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cw="net.lanelife.framework.cw.*"   creationComplete="initWindow()" width="850" height="400" title="进出仓记录">
+	<cw:layout>
+		<s:BasicLayout/>
+	</cw:layout>
+	<fx:Declarations>
+		
+		<mx:ChannelSet id="cs">
+			<mx:AMFChannel uri="/mobile-store-system/messagebroker/amf"/>
+		</mx:ChannelSet>
+		<mx:RemoteObject id="StoreInOut"   
+						 destination="storeInOutManager" channelSet="{cs}">
+			<mx:method name="getStoreInOuts" result="handleResult_getStoreInOuts(event)"/>
+			
+			<mx:method name="getStoreInOutByDate" result="handleResult_getStoreInOutByDate(event)"/>
+			
+			<mx:method name="deleletByid" result="handleResult_deleletByid(event)"/> 
+			
+			<mx:method name="getTotalNum" result="handleResult_getTotalNum(event)"/> 
+			<mx:method name="getTotalNumByDate" result="handleResult_getTotalNumByDate(event)"/> 
+			
+			<mx:method name="modify" result="handleResult_modify(event)"/> 
+		
+		</mx:RemoteObject> 
+		
+
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import flash.events.*;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DateField;
+			import mx.controls.Image;
+			import mx.core.Application;
+			import mx.core.FlexGlobals;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ArrayUtil;
+			import mx.utils.URLUtil;
+			
+			import myAs.StoreInOutF;
+			import myAs.StoreF;
+			
+			import net.lanelife.framework.cw.Dialog;
+			import net.lanelife.framework.cw.Dimension;
+			import net.lanelife.framework.cw.Window;
+			
+			import windows.backdraw.backDetailWindow;
+			import windows.porder.porderDetailWindow;    
+			
+			
+			
+			[Bindable] 
+			public var StoreInOuts:ArrayUtil = new ArrayUtil(); 
+			
+			[Bindable]
+			private var pageNumber : int = 1;
+			
+			[Bindable]
+			private var pageLimit : int = 8;
+			
+			[Bindable]
+			private var TotalNum : int = -1;
+			
+			[Bindable]
+			private var TotalPageNum : int = -1;
+			
+			
+			[Bindable]
+			public var  searchCode: int = 0;
+			
+			[Bindable]
+			public var  searchDate1: String = "";
+			
+			[Bindable]
+			public var  searchDate2: String = "";
+			
+			
+			[Bindable]
+			public var  optionArray: Array = ["one", "two"];
+			
+			[Bindable]
+			public var starthour:ArrayCollection = new ArrayCollection();
+			[Bindable]
+			public var endhour:ArrayCollection = new ArrayCollection();
+			
+			[Bindable]     
+			private var today:Date = new Date(new Date().setHours(0,0,0,0));     
+			[Bindable]     
+			private var start:Date = today;     
+			[Bindable]     
+			private var end:Date = null;     
+			
+			private var dateRange:Object ;   
+			
+			
+			
+			protected function initWindow():void
+			{
+				var hour : String = "" ;
+				for(var i : int =0;i<=9;i++ )
+				{
+					hour = "0"+i;
+					starthour.addItem(hour);
+					endhour.addItem(hour);
+				}
+				
+				for(var i : int =11;i<=23;i++ )
+				{
+					hour = ""+i;
+					starthour.addItem(hour);
+					endhour.addItem(hour);
+				}
+				
+				
+				optionArray[0]="";
+				optionArray[1]="";
+				searchCode=0;
+				
+				
+				
+				StoreInOut.getTotalNum();	
+				StoreInOut.getStoreInOuts((pageNumber-1)*pageLimit,pageLimit);
+				
+				//				BackDraw.getTotalNum(optionArray,searchCode);	
+				//				BackDraw.getBackDraws(optionArray,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+				
+			}
+			
+			private function onDateChangeHandler(event:Event):void     
+			{     
+				if(startDF.text == "")     
+				{     
+					startDF.selectedDate = start;     
+				}     
+				else     
+				{     
+					start = startDF.selectedDate;    
+					//endDF.selectedDate = start;                
+				}     
+				
+				if(endDF.text == "")     
+				{     
+					endDF.selectedDate = this.end;     
+				}     
+				else     
+				{   dateRange = new Object();
+					this.end = endDF.selectedDate;    
+					dateRange["rangeEnd"] = this.end;   
+					startDF.selectableRange = dateRange;   
+				}     
+				
+			}      
+			
+			
+			//专用回调函数 ，替代 initWindow 刷新数据时留在先前页
+			public function childCallback():void
+			{
+				StoreInOut.getTotalNum();	
+				StoreInOut.getStoreInOuts((pageNumber-1)*pageLimit,pageLimit);
+			}
+			
+			private function makeTotalPageNum():void
+			{
+				if(TotalNum % pageLimit ==0)
+				{
+					TotalPageNum = TotalNum/pageLimit;
+				}
+				else 
+					TotalPageNum = TotalNum/pageLimit + 1;
+			}
+			
+			protected function handleResult_modify(event:ResultEvent):void
+			{
+				//				if(event.result=="succeed")
+				//				{
+				//					Alert.show("操作成功");
+				//					childCallback();
+				//					
+				//				}
+				//				else
+				//					Alert.show("操作失败");
+			}
+			
+			protected function handleResult_deleletByid(event:ResultEvent):void
+			{
+				//				var flag : int = int(event.result);
+				//				
+				//				if(flag==1){
+				//					Alert.show("操作成功");
+				//					childCallback();
+				//				}
+				//				else
+				//					Alert.show("操作失败");
+				
+			}
+
+			public function handleResult_getTotalNumByDate(event:ResultEvent):void
+			{
+				
+				TotalNum  = int(event.result);
+				makeTotalPageNum();
+			
+			
+			}
+			public function handleResult_getTotalNum(event:ResultEvent):void
+			{
+				TotalNum  = int(event.result);
+				makeTotalPageNum();
+				
+				
+			}
+			
+			
+			public function handleResult_getStoreInOutByDate(event:ResultEvent):void
+			{
+				
+				var tempList :  Array ;
+				if(event.result!=null){
+					tempList= ArrayUtil.toArray(event.result);
+					storeInOutList.dataProvider=tempList[0];
+				}else{
+					Alert.show("没有找到相关任务信息");
+				}
+				
+			}	
+			public function addinOuts():void
+			{
+				
+				var inoutWin:storeinOutAdd  = storeinOutAdd(PopUpManager.createPopUp(this,storeinOutAdd,false));
+				inoutWin.resizable = false;
+				inoutWin.maximizable = false;
+				inoutWin.callFunction = this.childCallback; // 子窗体中可以调用的父窗体函数（这里是子窗体关闭时，用来刷新父窗体的内容 
+				PopUpManager.centerPopUp(inoutWin);
+			}	
+			
+			public function handleResult_save(event:ResultEvent):void
+			{
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+			}	
+			
+			public function handleResult_getStoreInOuts(event:ResultEvent):void
+			{
+				
+				var tempList :  Array ;
+				if(event.result!=null){
+					tempList= ArrayUtil.toArray(event.result);
+					storeInOutList.dataProvider=tempList[0];
+				}else{
+					Alert.show("没有找到相关任务信息");
+				}
+				
+			}	
+			
+//			public function detailbacks(event:MouseEvent):void
+//			{
+//				var backDraw_Id:String = backDrawList.selectedItem.code;
+//				
+//				
+//				var backDetailWin:backDetailWindow  = backDetailWindow(PopUpManager.createPopUp(this,backDetailWindow,false));
+//				backDetailWin.resizable = false;
+//				backDetailWin.maximizable = false;
+//				backDetailWin.backDraw_id = backDraw_Id; // 子窗体中可以调用的父窗体函数（这里是子窗体关闭时，用来刷新父窗体的内容 
+//				PopUpManager.centerPopUp(backDetailWin);
+//				
+//			}
+			
+			
+//			public function dealbacks(event:MouseEvent):void
+//			{
+//				var tempbackDraw : BackDrawF = new BackDrawF();
+//				tempbackDraw.backDrawId =  backDrawList.selectedItem.backDrawId;
+//				tempbackDraw.code =  backDrawList.selectedItem.code;
+//				tempbackDraw.billDate =  backDrawList.selectedItem.billDate;
+//				
+//				tempbackDraw.state =  backDrawList.selectedItem.state;
+//				tempbackDraw.totalM=backDrawList.selectedItem.totalM;
+//				tempbackDraw.memo=backDrawList.selectedItem.memo;
+//				
+//				
+//				var code_Id:String = backDrawList.selectedItem.code;
+//				
+//				
+//				var dealWin:dealbackWin  = dealbackWin(PopUpManager.createPopUp(this,dealbackWin,false));
+//				dealWin.resizable = false;
+//				dealWin.maximizable = false;
+//				dealWin.code_Id = code_Id;// 子窗体中可以调用的父窗体函数（这里是子窗体关闭时，用来刷新父窗体的内容
+//				dealWin.tempData =tempbackDraw;
+//				PopUpManager.centerPopUp(dealWin);
+//				
+//			}
+		
+			public function	showAll(event:MouseEvent):void
+			{
+				startDF.text="";
+				endDF.text="";
+				this.start = today;     
+				this.end = null; 
+				dateRange = new Object();
+				
+				sh.text="00";
+				eh.text="00";
+				searchCode=0;
+				optionArray[0]=""
+				optionArray[1]="";
+				
+				StoreInOut.getTotalNum();	
+				StoreInOut.getStoreInOuts((pageNumber-1)*pageLimit,pageLimit);
+				
+				//				BackDraw.getTotalNum(optionArray,searchCode);	
+				//				BackDraw.getBackDraws(optionArray,(pageNumber-1)*pageLimit,pageLimit,searchCode);
+			}
+			
+			
+			
+//			protected function readywords():void
+//			{
+//				Alert.show("word");
+//				
+//				var tempStr:String =Application.application.url;
+//				var serverName:String =URLUtil.getServerName(tempStr);
+//				var serverPort:String=URLUtil.getPort(tempStr).toString();
+//				var serverProtocol:String=URLUtil.getProtocol(tempStr);
+//				var uString:String = serverProtocol + "://" + serverName + ":" +serverPort+"/"+"mobile-store-system/";
+//				
+//				var type:String ="tuihuo";
+//				var id : String = backDrawList.selectedItem.code;
+//				var docname = "tuihuo"+" "+backDrawList.selectedItem.code;
+//				
+//				var url : String =uString+"PrintWord?type="+type+"&id="+id+"&pfileName="+docname;
+//				var urlRequest:URLRequest = new URLRequest(url);
+//				navigateToURL(urlRequest, "_top");
+//				
+//			}
+			
+			
+			public function  saixuanbytime(event:MouseEvent):void
+			{
+				
+				if(startDF.text=="" || endDF.text=="" )
+				{
+					Alert.show("请输入时间");
+				}
+					
+				else
+				{
+					searchDate1=startDF.text+" "+sh.text+":"+"00"+":"+"00";
+					searchDate2=endDF.text+" "+eh.text+":"+"00"+":"+"00";
+					
+					optionArray[1]=searchDate1;
+					optionArray[2]=searchDate2;
+					searchCode=1;
+					
+					StoreInOut.getTotalNum(searchDate1,searchDate2);	
+					StoreInOut.getStoreInOutByDate(searchDate1,searchDate2,(pageNumber-1)*pageLimit,pageLimit);
+					
+					return;
+				}
+				
+			}
+			
+			//翻页操作
+			//上一页
+			private function prePage():void{
+				if(pageNumber > 1){
+					pageNumber -= 1;
+					
+					if(searchCode==0)
+						StoreInOut.getStoreInOuts((pageNumber-1)*pageLimit,pageLimit);
+					else if(searchCode==1)
+						StoreInOut.getStoreInOutByDate(optionArray[0],optionArray[1],(pageNumber-1)*pageLimit,pageLimit);
+					else if(searchCode==2){}
+						//BackDraw.getBackDraws("123",(pageNumber-1)*pageLimit,pageLimit);
+					
+					
+					
+				}
+			}
+			//下一页
+			private function nextPage():void{
+				if(pageNumber < this.pageChoice.maximum){
+					pageNumber += 1;
+					
+					
+					
+					if(searchCode==0)
+						StoreInOut.getStoreInOuts((pageNumber-1)*pageLimit,pageLimit);
+					else if(searchCode==1)
+						StoreInOut.getStoreInOutByDate(optionArray[0],optionArray[1],(pageNumber-1)*pageLimit,pageLimit);
+					else if(searchCode==2){}
+						//StoreInOut.getBackDraws("123",(pageNumber-1)*pageLimit,pageLimit);
+				}
+			}
+			//跳转至
+			private function jumpPage():void{
+				
+				
+				
+				if(searchCode==0)
+					StoreInOut.getStoreInOuts((pageChoice.value-1)*pageLimit,pageLimit);
+				else if(searchCode==1)
+					StoreInOut.getStoreInOutByDate(optionArray[0],optionArray[1],(pageChoice.value-1)*pageLimit,pageLimit);
+				else if(searchCode==2){}
+					//BackDraw.getBackDraws("123",(pageChoice.value-1)*pageLimit,pageLimit);
+			}
+			
+			
+		]]>
+	</fx:Script>
+	
+	
+	
+	<mx:HDividedBox width="100%" height="100%" >
+		
+		<s:VGroup  height="100%" width="100%">
+			<s:HGroup width="90%" height="8%">
+				
+				<s:Label text="当前项：" height="30" verticalAlign="middle" textAlign="center"/>
+				<s:Label id="curadminName" width="229" verticalAlign="middle" textAlign="center" height="30" text="  编号 ：  {storeInOutList.selectedItem.code}"/>
+				<s:Button label="添加记录" id="add" height="25" width="80"  click="addinOuts()"/>
+				<!--<s:Button label="处理退货" id="dealbon" height="25" width="80"  click="dealbacks(event)"/>-->
+				<!--<s:Button label="生成word打印" id="wordtest" width="120" height="30"  click="readywords()"/>-->
+			</s:HGroup>
+			<s:HGroup width="100%" height="10%">
+				<mx:ApplicationControlBar width="790" dock="true">
+					<s:Button label="时间筛选" id="saixuanbon" height="25" width="80"  click="saixuanbytime(event)"/>
+					<s:Button label="显示全部" id="cancelsaixuanbon" height="25" width="80"  click="showAll(event)"/>    
+					<mx:Label text="开始日期：" />     
+					<mx:DateField id="startDF"  showToday="true" formatString="YYYY-MM-DD"     
+								  change="onDateChangeHandler(event)"/>     
+					<mx:ComboBox id="sh" dataProvider="{starthour}" width="50" color="0x000000"/>
+					<mx:Label text="时"  height="25" width="30" />
+					<mx:Label text=" 至 "  height="25" width="30" />    
+					<mx:Label text="结束日期："/>     
+					<mx:DateField id="endDF" showToday="true" formatString="YYYY-MM-DD"     
+								  selectableRange="{{rangeStart:start}}" change="onDateChangeHandler(event)"/>  
+					<mx:ComboBox id="eh" dataProvider="{endhour}" width="50" color="0x000000"/>
+					<mx:Label text="时"  height="25" width="30" />
+					
+				</mx:ApplicationControlBar>   
+				
+			</s:HGroup>
+			
+			
+			<s:HGroup width="100%" height="50%">
+				
+	
+				<mx:DataGrid  id="storeInOutList" dataProvider="{StoreInOuts}"  width="100%" height="100%">
+					<mx:columns>
+						<mx:DataGridColumn  width="40"  headerText="单据Id" dataField="inOutId"/>
+						<mx:DataGridColumn  width="80" headerText="单据编号" dataField="code" />
+						<mx:DataGridColumn  width="80" headerText="进/出标志" dataField="satid" />
+						<mx:DataGridColumn  width="80" headerText="操作员" dataField="operator" />
+						<mx:DataGridColumn  width="80" headerText="仓库ID" dataField="store.storeid" />
+						<mx:DataGridColumn  width="80" headerText="取料人" dataField="people"/>
+						<mx:DataGridColumn  width="80" headerText="总金额" dataField="totalM" />
+						<mx:DataGridColumn  width="80" headerText="备注" dataField="memo"/>
+						<!--<mx:AdvancedDataGridColumn  width="80" headerText="单据日期" dataField="billDate"/>
+						<mx:AdvancedDataGridColumn  width="80" headerText="状态" dataField="state" />
+						<mx:AdvancedDataGridColumn  width="80" headerText="修改日期" dataField="updateTime"/>
+						<mx:AdvancedDataGridColumn  width="80" headerText="打印样式" dataField="RPTID" />-->
+						
+					</mx:columns>
+				</mx:DataGrid>
+				
+			</s:HGroup>
+			
+			<s:HGroup width="90%" height="7%" verticalAlign="bottom" >
+				<mx:ApplicationControlBar width="790" dock="true">
+					<s:Label width="300" text=""/>	
+					<s:Button id="preBon" label="上一页" click="prePage()"/>
+					<s:Button id="nextBon" label="下一页" click="nextPage()"/>
+					<s:Button id="jumpBon" label="跳转至" click="jumpPage()" />
+					<s:NumericStepper id="pageChoice" minimum="1" maximum="{TotalPageNum}" value="{pageNumber}" width="50" height="21" />
+					<s:Label  verticalAlign="middle" text="页" width="15" height="22"  textAlign="center"/>
+					<s:Label textAlign="center" verticalAlign="middle" text=" 共{TotalPageNum}页   {TotalNum}条记录" width="100" height="22" />
+				</mx:ApplicationControlBar>
+			</s:HGroup>
+			
+			
+		</s:VGroup >
+	</mx:HDividedBox>
+</cw:DesktopWindow>
+		
